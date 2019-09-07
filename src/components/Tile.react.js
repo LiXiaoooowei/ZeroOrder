@@ -50,7 +50,7 @@ function Tile(props: Props) {
 
   return (
     <polygon
-      data-id={relativeCenter.X + "->" + relativeCenter.Y}
+      data-id={relativeCenter.X + "-" + relativeCenter.Y}
       points={toVerticesString()}
       onClick={e => {
         handleClick(e.target.dataset);
