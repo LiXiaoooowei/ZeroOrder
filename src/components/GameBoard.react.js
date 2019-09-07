@@ -1,8 +1,9 @@
 // @flow
 
 import React, {useState} from "react";
-import UIConstants from "../constants";
+import UIConstants, {UnitType} from "../constants";
 import Tile from "./Tile.react";
+import type {Point} from "../typeDefinitions";
 
 type Props = {|
   handleUnitClick: (unit: string) => void,
@@ -45,7 +46,7 @@ function GameBoard(props: Props) {
         }
         tiles.push(
           <Tile
-            key={i + "->" + j}
+            key={i + UIConstants.TILE_KEY_CONNECTOR + j}
             absoluteCenter={{
               X: (1 + 1.5 * j) * radius + margin,
               Y:
@@ -53,12 +54,10 @@ function GameBoard(props: Props) {
                 i * Math.sqrt(3) * radius +
                 UIConstants.GAMEBOARD_PADDING
             }}
-            relativeCenter={{
-              X: i,
-              Y: j
-            }}
+            relativeCenter={toBoardCoordinate(i, j)}
             radius={radius}
             handleUnitClick={handleUnitClick}
+            unitType={UnitType.BLACK_DELETE}
           />
         );
       }
@@ -77,6 +76,23 @@ function GameBoard(props: Props) {
       {createTiles()}
     </svg>
   );
+}
+
+function toBoardCoordinate(i: number, j: number): Point {
+  switch (j) {
+    case 0:
+      return {X: j, Y: i + 1};
+    case 1:
+      return {X: j, Y: i + 1};
+    case 2:
+      return {X: j, Y: i + 2};
+    case 3:
+      return {X: j, Y: i + 2};
+    case 4:
+      return {X: j, Y: i + 3};
+    default:
+      return {X: -1, Y: -1};
+  }
 }
 
 export default GameBoard;

@@ -1,1 +1,3 @@
-export type Point = {|X: number, Y: number|};
+// @flow
+
+export type Point = {X: number, Y: number};

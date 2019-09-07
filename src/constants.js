@@ -4,6 +4,7 @@ export default class UIConstants {
   static UNIT_TILE_MARGIN = 2;
   static SCOREBOARD_WIDTH_PROPORTION =
     1 - UIConstants.GAMEBOARD_WIDTH_PROPORTION;
+  static TILE_KEY_CONNECTOR = "-";
 }
 
 export const UnitType = {

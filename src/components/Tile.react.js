@@ -2,29 +2,50 @@
 
 import React, {useEffect, useRef, useState} from "react";
 import ReactDOM from "react-dom";
-import UIConstants from "../constants";
-import Point from "../typeDefinitions";
+import UIConstants, {UnitType} from "../constants";
+import type {Point} from "../typeDefinitions";
 
-type Props = {|
+type UIProps = {
   absoluteCenter: Point,
   relativeCenter: Point,
   radius: number,
   handleUnitClick: (unit: string) => void
-|};
+};
+
+type LgProps = {
+  unitType: UnitType
+};
+
+type Props = UIProps & LgProps;
 
 function Tile(props: Props) {
-  const {absoluteCenter, radius, relativeCenter, handleUnitClick} = props;
+  const {
+    absoluteCenter,
+    radius,
+    relativeCenter,
+    handleUnitClick,
+    unitType
+  } = props;
   const [radius_adjusted, setRadius] = useState(
     radius - UIConstants.UNIT_TILE_MARGIN
   );
-  const [color, setColor] = useState("white");
+
+  function setColor() {
+    switch (unitType) {
+      case UnitType.BLACK_DELETE:
+        return "yellow";
+      case UnitType.WHITE_DELETE:
+        return "orange";
+      default:
+        return "red";
+    }
+  }
 
   function toVertex(dx, dy) {
     return [dx + absoluteCenter.X, dy + absoluteCenter.Y].join(",");
   }
 
   function handleClick(dataset) {
-    setColor("black");
     handleUnitClick(dataset.id);
   }
 
@@ -55,8 +76,8 @@ function Tile(props: Props) {
       onClick={e => {
         handleClick(e.target.dataset);
       }}
-      fill={color}
-    ></polygon>
+      fill={setColor()}
+    />
   );
 }
 
