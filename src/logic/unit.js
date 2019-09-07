@@ -46,6 +46,7 @@ class Unit {
 	isFreeToActivate() {
 		return (this.isFreeToActivate && !this.has_activated);
 	}
+	// mark a unit as defeated
 	defeat() {
 		this.defeated = true;
 		this.is_mobile = false;
@@ -94,13 +95,46 @@ class Push extends Unit {
 	}
 
 	getActivations(game_board){
-		var neighbouring_enemies = game_board.getNeighbouringEnemies();
+		var neighbouring_enemies = game_board.getNeighbouringEnemies(this.player_id, this.position);
 		var valid_targets = [];
 		for (var i = 0; i < neighbouring_enemies.length; i++) {
-			var target_ID = getNextHexInDirection(origin, next);
-			if (game_board.getHexagon(ID).is_empty_tile) {
-				valid_targets.push(target_ID);
+			var enemy_pos = neighbouring_enemies[i];
+			var target_ID = game_board.getNextHexInDirection(this.position, enemy_pos);
+			// the action is valid if the space behind target is out of map
+			if (target_ID === null){
+				valid_targets.push(enemy_pos);
 			}
+			// the action is valid if the space behind target is an empty tile
+			if (game_board.getHexagon(target_ID).is_empty_tile) {
+				valid_targets.push(enemy_pos);
+			}
+			// (the action is not valid if the space behind target is an occupied tile)
+		}
+		return valid_targets;
+	}
+}
+
+class Toss extends Unit {
+	constructor(player_id) {
+		super(player_id);
+		this.name = 'toss';
+	}
+
+	getActivations(game_board){
+		var neighbouring_enemies = game_board.getNeighbouringEnemies(this.player_id, this.position);
+		var valid_targets = [];
+		for (var i = 0; i < neighbouring_enemies.length; i++) {
+			var enemy_pos = neighbouring_enemies[i];
+			var target_ID = game_board.getNextHexInOppDirection(this.position, enemy_pos);
+			// the action is valid if the space behind target is out of map
+			if (target_ID === null){
+				valid_targets.push(enemy_pos);
+			}
+			// the action is valid if the space behind target is an empty tile
+			if (game_board.getHexagon(target_ID).is_empty_tile) {
+				valid_targets.push(enemy_pos);
+			}
+			// (the action is not valid if the space behind target is an occupied tile)
 		}
 		return valid_targets;
 	}
@@ -113,10 +147,19 @@ class Switch extends Unit {
 	}
 
 	getActivations(game_board){
-		var 
+		var friendly_units = game_board.getFriendlyUnits(this.player_id);
 		var valid_targets = [];
+		for (var i = 0; i < friendly_units.length; i++) {
+			var unit = game_board.getHexagon(friendly_units[i]).getUnit();
+			if (!unit.defeated && unit.getName() != 'switch') {
+				valid_targets.push(unit.getPosition());
+			}
+		}
+		return valid_targets;
 	}
 }
 
 module.exports.Delete = Delete;
 module.exports.Push = Push;
+module.exports.Toss = Toss;
+module.exports.Switch = Switch;

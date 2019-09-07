@@ -20,11 +20,13 @@ const ZERO_ORDER = 0,
 BLACK_DELETE = 1,
 BLACK_PUSH = 2,
 BLACK_SWITCH = 3,
+BLACK_TOSS = 4,
 WHITE_DELETE = 19,
 WHITE_PUSH = 20,
 WHITE_SWITCH = 21,
-EMPTY_SPACE = 22,
-EMPTY_TILE = 23;
+WHITE_TOSS = 22,
+EMPTY_SPACE = 37,
+EMPTY_TILE = 38;
 
 
 
@@ -114,6 +116,9 @@ class BoardState {
 		}
 		else if(name === 'switch'){
 			num = 3+offset;
+		}
+		else if(name === 'toss') {
+			num = 4+offset;
 		}
 		return [num, true]
 	}

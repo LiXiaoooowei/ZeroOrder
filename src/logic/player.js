@@ -107,6 +107,12 @@ class AI extends Player {
 		var target = valid_activations[rand1][2][rand2];
 		return [unit, target];
 	}
+
+	// randomly choose an empty space to place the new tile
+	placeTileRandom(empty_spaces) {
+		var rand = Math.floor(Math.random()*empty_spaces.length);
+		return empty_spaces[rand];
+	}
 }
 
 

@@ -5,7 +5,7 @@ var board_state = require('./boardState');
 // Game board and hexagons
 
 // constants for shape of board, see rule.pdf
-const BOARD_SHAPE = [[1, 7], [1, 8], [2, 8], [2, 9], [3,9]];
+const BOARD_SHAPE = [[0, 6], [0, 7], [1, 7], [1, 8], [2,8]];
 const NUM_COLS = 5;
 
 
@@ -19,7 +19,7 @@ class GameBoard {
 				this.hexagon_list.set(ID_to_key(ID), new Hexagon(ID));
 			}
 		}
-		this.piece_to_place = null;
+		this.piece_to_place = [];
 
 	}
 
@@ -28,30 +28,57 @@ class GameBoard {
 	}
 
 	getHexagon(ID) {
-		// console.log(this.hexagon_list.get(ID_to_key([2,3])))
 		return this.hexagon_list.get(ID_to_key(ID));
 	}
 
-	hasFreeTileToGo(tile_ID, player_ID) {
-		var neighbours = get_hexagon_neighbour_ID(tile_ID);
-		for (var i = 0; i < neighbours.length; i++){
-			var hexagon = this.getHexagon(neighbours[i]);
-			if (hexagon.isEmptyTile()){
-				return true;
-			}
+	get_hexagon_neighbours(ID) {
+		// var ID_list = get_hexagon_neighbour_ID(ID);		
+		var ID_list = this.hexagon_list.get(ID_to_key(ID)).getNeighbourHexagonID();
+		var neighbours = [];
+		for (var i = 0; i < ID_list.length; i++) {
+			neighbours.push(this.hexagon_list.get(ID_to_key(ID_list[i])));
 		}
-		return false;
+		return neighbours;
 	}
-	getTilesToMove(tile_ID, player_ID) {
-		var valid_tiles = [];
-		var neighbours = get_hexagon_neighbour_ID(tile_ID);
-		for (var i = 0; i < neighbours.length; i++){
-			var hexagon = this.getHexagon(neighbours[i]);
-			if (hexagon.isEmptyTile()){
-				valid_tiles.push(hexagon.getID());
+	// create an boardstate object for front-end
+	generateBoardState(current_player) {
+		var boardstate = new board_state.BoardState(NUM_COLS, BOARD_SHAPE, this.white_player, current_player);
+		for (var pair of this.hexagon_list) {
+			boardstate.setHexagon(key_to_ID(pair[0]),pair[1]);
+		}
+		return boardstate;
+	}
+	
+	//////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////// MOVEMENT///////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////
+	
+	//[[unit_position, [target positions]],...]
+	getAllValidMoves(player_id) {
+		var movement_list = [];		
+		// loop through all hexagons
+		for (var pair of this.hexagon_list) {
+			var key = pair[0];
+			var hexagon = pair[1];
+			var unit = hexagon.getUnit();
+			
+			if (unit === null) {
+				continue;
+			}
+			
+			// check if the unit is free to move
+			if (unit.player_id != player_id || !unit.isFreeToMove()){
+				continue;
+			}
+			// get valid movement of the piece
+			var tile_ID = key_to_ID(key);
+			var targets = this.getTilesToMove(tile_ID, player_id);
+			// console.log(targets)
+			if (targets.length > 0) {
+				movement_list.push([key_to_ID(key), targets]);
 			}
 		}
-		return valid_tiles;
+		return movement_list;
 	}
 	isValidMove(move, player_ID) {
 		var starting_pos = move[0];
@@ -84,16 +111,284 @@ class GameBoard {
 		second_hexagon.setUnit(unit);
 		unit.setPosition(second_ID);
 	}
-	get_hexagon_neighbours(ID) {
-		// var ID_list = get_hexagon_neighbour_ID(ID);		
-		var ID_list = this.hexagon_list.get(ID_to_key(ID)).getNeighbourHexagonID();
-		var neighbours = [];
-		for (var i = 0; i < ID_list.length; i++) {
-			neighbours.push(this.hexagon_list.get(ID_to_key(ID_list[i])));
+	hasFreeTileToGo(tile_ID, player_ID) {
+		var neighbours = get_hexagon_neighbour_ID(tile_ID);
+		for (var i = 0; i < neighbours.length; i++){
+			var hexagon = this.getHexagon(neighbours[i]);
+			if (hexagon.isEmptyTile()){
+				return true;
+			}
 		}
-		return neighbours;
+		return false;
+	}
+	getTilesToMove(tile_ID, player_ID) {
+		var valid_tiles = [];
+		var neighbours = get_hexagon_neighbour_ID(tile_ID);
+		for (var i = 0; i < neighbours.length; i++){
+			var hexagon = this.getHexagon(neighbours[i]);
+			if (hexagon.isEmptyTile()){
+				valid_tiles.push(hexagon.getID());
+			}
+		}
+		return valid_tiles;
 	}
 
+	//////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////// ACTIVATION ////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////
+	
+	//[['unit_name', unit_position, [target list]],...]
+	getAllValidActivations(player_id) {
+		var activation_list = [];
+		// loop through all hexagons
+		for (var pair of this.hexagon_list) {
+			var key = pair[0];
+			var hexagon = pair[1];
+			var unit = hexagon.getUnit();
+			if (unit === null) {
+				continue;
+			}
+			// check if the unit is free to activate
+			if (unit.player_id != player_id || !unit.isFreeToActivate()){
+				continue;
+			}
+			// get valid activations of the piece
+			var targets = unit.getActivations(this);
+			// console.log(targets)
+			if (targets.length > 0) {
+				activation_list.push([unit.getName(), key_to_ID(key), targets]);
+			}
+		}
+		return activation_list;
+	}
+	// validate an action
+	isValidActivation(activation){
+		// return true;					//This should always returns true!!!!!!!!!!!
+		var unit = activation[0];
+		var target = activation[1];
+		// the unit must be free to activate and has not yet activated
+		if (!unit.free_to_activate || unit.has_activated) {
+			return false;
+		}
+		var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
+		
+		// target must not be already defeated (to be changed later)
+		if (target_unit.defeated) {
+			return false;
+		}	
+		// target must belong to correct player
+		switch (unit.getName()) {
+			case 'switch':
+				if (target_unit.getPlayerID() != unit.getPlayerID()){
+					return false;
+				}
+				break;
+			default:
+				if (target_unit.getPlayerID() === unit.getPlayerID()){
+					return false;
+				}
+		}	
+		switch (unit.getName()) {
+			case 'delete':		
+				// target must be neighbour of target piece			
+				var neighbours = get_hexagon_neighbour_ID(unit.position);
+				for (var i = 0; i < neighbours.length; i++) {
+					if (ID_to_key(neighbours[i]) === ID_to_key(target_unit.getPosition())){
+						return true;
+					}
+				}
+				break;
+			case 'toss':
+				// target must be neighbour of target piece
+				var neighbours = get_hexagon_neighbour_ID(unit.position);
+				var is_neighbour = false;
+				for (var i = 0; i < neighbours.length; i++) {
+					if (ID_to_key(neighbours[i]) === ID_to_key(target_unit.getPosition())){
+						is_neighbour = true;
+					}
+				}
+				if (!is_neighbour) {
+					return false;
+				}
+				// the space behind target must not be an occupied tile
+				var next_hex = this.getNextHexInOppDirection(unit.getPosition(), target_unit.getPosition());
+				// the action is valid if the space behind target is out of map
+				if (next_hex === null){
+					return true;
+				}
+				// the action is valid if the space behind target is an empty tile
+				if (this.getHexagon(next_hex).is_empty_tile) {
+					return true;
+				}
+				break;
+			case 'push':
+				// target must be neighbour of target piece
+				var neighbours = get_hexagon_neighbour_ID(unit.position);
+				var is_neighbour = false;
+				for (var i = 0; i < neighbours.length; i++) {
+					if (ID_to_key(neighbours[i]) === ID_to_key(target_unit.getPosition())){
+						is_neighbour = true;
+					}
+				}
+				if (!is_neighbour) {
+					return false;
+				}
+				// the space behind target must not be an occupied tile
+				var next_hex = this.getNextHexInDirection(unit.getPosition(), target_unit.getPosition());
+				// the action is valid if the space behind target is out of map
+				if (next_hex === null){
+					return true;
+				}
+				// the action is valid if the space behind target is an empty tile
+				if (this.getHexagon(next_hex).is_empty_tile) {
+					return true;
+				}
+				break;
+			case 'switch':
+				// target must be player's unit
+				var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
+				if (target_unit.getPlayerID() === unit.getPlayerID()) {
+					return true;
+				}
+				break;
+			default:
+				return false;
+		}
+
+		return false;
+	}
+	// execute an action
+	performAction(activation) {
+		var unit = activation[0];
+		var target = activation[1];
+
+		switch (unit.getName()) {
+			case 'delete':
+				var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
+				// set unit as activated
+				unit.performAction();
+				// defeat target unit
+				target_unit.defeat();
+				// clean-up gameboard
+				var hexagon = this.hexagon_list.get(ID_to_key(target));
+				hexagon.setUnit(null);
+				this.piece_to_place.push(target_unit);
+				break;
+			case 'push':				
+				var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
+				// set unit as activated
+				unit.performAction();
+				var hexagons = this.getAllHexInDirection(unit.getPosition(), target);
+				// Four possibilities for target:				
+				//	[tile, tile, unit, ...]			#1
+				//	[tile, tile, not tile, ...]		#2
+				//	[tile, tile, ..., tile]			#3
+				//	[]								#4
+				var off_board_flag = true;
+				var target_defeated = true;
+				for (var i = 0; i < hexagons.length; i++) {
+					hexagon = this.hexagon_list.get(ID_to_key(hexagons[i]));
+					// #2
+					if (!hexagon.isTile()) {
+						off_board_flag = false;
+						break;
+					}
+					// #1
+					if (!hexagon.isEmptyTile()) {
+						hexagon = this.hexagon_list.get(ID_to_key(hexagons[i-1]));
+						off_board_flag = false;
+						target_defeated = false;
+						break;
+					}
+				}
+				// if target sruvives (#1)
+				if (!target_defeated) {
+					this.performMovement([target, hexagon.getID()]);
+				}
+				// if target is defeated but not off map (#2)
+				else if(!off_board_flag){
+					hexagon.setAsTile();
+					var hexagon = this.hexagon_list.get(ID_to_key(target));
+					hexagon.setUnit(null);
+					target_unit.defeat();
+				}
+				// target is defeated and off map (#3 and #4)
+				else {
+					var hexagon = this.hexagon_list.get(ID_to_key(target));
+					hexagon.setUnit(null);
+					target_unit.defeat();
+					this.piece_to_place.push(target_unit);
+				}
+				break;
+			case 'toss':
+				var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
+				// set unit as activated
+				unit.performAction();
+				var hexagons = this.getAllHexInOppDirection(unit.getPosition(), target);
+				// Four possibilities for target:				
+				//	[tile, tile, unit, ...]			#1
+				//	[tile, tile, not tile, ...]		#2
+				//	[tile, tile, ..., tile]			#3
+				//	[]								#4
+				var off_board_flag = true;
+				var target_defeated = true;
+				for (var i = 0; i < hexagons.length; i++) {
+					hexagon = this.hexagon_list.get(ID_to_key(hexagons[i]));
+					// #2
+					if (!hexagon.isTile()) {
+						off_board_flag = false;
+						break;
+					}
+					// #1
+					if (!hexagon.isEmptyTile()) {
+						hexagon = this.hexagon_list.get(ID_to_key(hexagons[i-1]));
+						off_board_flag = false;
+						target_defeated = false;
+						break;
+					}
+				}
+				// if target sruvives (#1)
+				if (!target_defeated) {
+					this.performMovement([target, hexagon.getID()]);
+				}
+				// if target is defeated but not off map (#2)
+				else if(!off_board_flag){
+					hexagon.setAsTile();
+					var hexagon = this.hexagon_list.get(ID_to_key(target));
+					hexagon.setUnit(null);
+					target_unit.defeat();
+				}
+				// target is defeated and off map (#3 and #4)
+				else {
+					var hexagon = this.hexagon_list.get(ID_to_key(target));
+					hexagon.setUnit(null);
+					target_unit.defeat();
+					this.piece_to_place.push(target_unit);
+				}
+				break;
+			case 'switch':
+				var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
+				// set unit as activated
+				unit.performAction();
+				// exchange position between 'switch' and target
+				var original_position = unit.getPosition();
+				unit.setPosition(target);
+				target_unit.setPosition(original_position);
+				// update gameboard
+				var hexagon = this.hexagon_list.get(ID_to_key(target));
+				hexagon.setUnit(unit);
+				hexagon = this.hexagon_list.get(ID_to_key(original_position));
+				hexagon.setUnit(target_unit);
+				break;
+			case 'freeze':
+				break;
+			default:
+				console.log('unknown unit activation' + activation);
+		}
+	}
+
+	// utility functions for unit activation
+	//----------------------------- general functions----------------------------------
 	getNeighbouringEnemies(player_id, position){
 		var neighbours = this.get_hexagon_neighbours(position);
 		// console.log(neighbours)
@@ -106,49 +401,30 @@ class GameBoard {
 		}
 		return enemy_positions;
 	}
-	isValidActivation(unit, target){
-
-		if (!unit.free_to_activate || unit.has_activated) {
-			return false;
-		}
-		var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
-
-		if (unit.getName() === 'delete') {
-			if (target_unit.getPlayerID() === unit.getPlayerID()){
-				return false;
-			}
-			if (target_unit.defeated) {
-				return false;
-			}		
-			var neighbours = get_hexagon_neighbour_ID(unit.position);
-			for (var i = 0; i < neighbours.length; i++) {
-				// console.log(neighbours[i])
-				if (ID_to_key(neighbours[i]) === ID_to_key(target_unit.getPosition())){
-					return true;
+	getFriendlyUnits(player_id) {
+		var friendly_list = [];
+		for (var pair of this.hexagon_list) {
+			var key = pair[0];
+			var hexagon = pair[1];
+			if (hexagon.isTile() && (!hexagon.isEmptyTile())){
+				var unit = hexagon.getUnit();
+				if (unit.getPlayerID() === player_id){
+					friendly_list.push(unit.getPosition());
 				}
 			}
 		}
-
-		return false;
+		return friendly_list;
 	}
-	performAction(unit, target) {
-		if (unit.getName() === 'delete') {
-			var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
-			// set unit as activated
-			unit.performAction();
-			// defeat target unit
-			target_unit.defeat();
-			// clean-up gameboard
-			var hexagon = this.hexagon_list.get(ID_to_key(target));
-			hexagon.setUnit(null);
-		}
-	}
+	//----------------------------- end of general ----------------------------------
+	//----------------------------PUSH and TOSS------------------------------
 	getNextHexInDirection(origin, next) {
 		//----------to do: validate origin and next are neighbours
 		var col_change = next[0]-origin[0];
 		var row_change = next[1]-origin[1];
 		var col = next[0];
 		var row = next[1];
+		col = col + col_change;
+		row = row + row_change;
 		var next_pos = [col, row]
 		if (isInBoard(next_pos)){
 			return next_pos;
@@ -176,64 +452,41 @@ class GameBoard {
 		}
 		return hexagon_list;
 	}
+	getNextHexInOppDirection(origin, next) {
+		return this.getNextHexInDirection(next, origin);
+	}
+	getAllHexInOppDirection(origin, next) {
+		return this.getAllHexInDirection(next, origin);
+	}
+	//----------------------------end of PUSH and TOSS------------------------------
+		
+	
 
-	//[[unit_position, [target positions]],...]
-	getAllValidMoves(player_id) {
-		var movement_list = [];		
-		// loop through all hexagons
+	//////////////////////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////// BUILDING /////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////
+	needBuilding() {
+		return (this.piece_to_place.length != 0);
+	}
+	getEmptySpaces() {
+		var empty_spaces = [];
 		for (var pair of this.hexagon_list) {
 			var key = pair[0];
 			var hexagon = pair[1];
-			var unit = hexagon.getUnit();
-			
-			if (unit === null) {
-				continue;
-			}
-			
-			// check if the unit is free to move
-			if (unit.player_id != player_id || !unit.isFreeToMove()){
-				continue;
-			}
-			// get valid movement of the piece
-			var tile_ID = key_to_ID(key);
-			var targets = this.getTilesToMove(tile_ID, player_id);
-			// console.log(targets)
-			if (targets.length > 0) {
-				movement_list.push([key_to_ID(key), targets]);
+			if (!hexagon.isTile()) {
+				empty_spaces.push(hexagon.getID());
 			}
 		}
-		return movement_list;
+		return empty_spaces;
 	}
-	//[['unit_name', unit_position, [target list]],...]
-	getAllValidActivations(player_id) {
-		var activation_list = [];
-		// loop through all hexagons
-		for (var pair of this.hexagon_list) {
-			var key = pair[0];
-			var hexagon = pair[1];
-			var unit = hexagon.getUnit();
-			if (unit === null) {
-				continue;
-			}
-			// check if the unit is free to activate
-			if (unit.player_id != player_id || !unit.isFreeToActivate()){
-				continue;
-			}
-			// get valid activations of the piece
-			var targets = unit.getActivations(this);
-			// console.log(targets)
-			if (targets.length > 0) {
-				activation_list.push([unit.getName(), key_to_ID(key), targets]);
-			}
-		}
-		return activation_list;
+	isValidBuilding(target) {
+		var hexagon = this.hexagon_list.get(ID_to_key(target));
+		return !hexagon.is_tile;
 	}
-	generateBoardState(current_player) {
-		var boardstate = new board_state.BoardState(NUM_COLS, BOARD_SHAPE, this.white_player, current_player);
-		for (var pair of this.hexagon_list) {
-			boardstate.setHexagon(key_to_ID(pair[0]),pair[1]);
-		}
-		return boardstate;
+	buildTile(target) {
+		this.piece_to_place.pop();
+		var hexagon = this.hexagon_list.get(ID_to_key(target));
+		hexagon.setAsTile();
 	}
 }
 
