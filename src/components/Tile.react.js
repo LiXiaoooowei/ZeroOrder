@@ -12,7 +12,7 @@ type Props = {|
   handleUnitClick: (unit: string) => void
 |};
 
-function UnitTile(props: Props) {
+function Tile(props: Props) {
   const {absoluteCenter, radius, relativeCenter, handleUnitClick} = props;
   const [radius_adjusted, setRadius] = useState(
     radius - Constants.UNIT_TILE_MARGIN
@@ -60,4 +60,4 @@ function UnitTile(props: Props) {
   );
 }
 
-export default UnitTile;
+export default Tile;

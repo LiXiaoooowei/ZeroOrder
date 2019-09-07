@@ -2,7 +2,7 @@
 
 import React, {useState} from "react";
 import Constants from "../constants";
-import UnitTile from "./UnitTile.react";
+import Tile from "./Tile.react";
 
 type Props = {|
   handleUnitClick: (unit: string) => void,
@@ -44,7 +44,7 @@ function GameBoard(props: Props) {
           continue;
         }
         tiles.push(
-          <UnitTile
+          <Tile
             key={i + "->" + j}
             absoluteCenter={{
               X: (1 + 1.5 * j) * radius + margin,
