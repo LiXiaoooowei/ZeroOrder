@@ -1,6 +1,19 @@
-export default class Constants {
+export default class UIConstants {
   static GAMEBOARD_WIDTH_PROPORTION = 0.6;
   static GAMEBOARD_PADDING = 20;
   static UNIT_TILE_MARGIN = 2;
-  static SCOREBOARD_WIDTH_PROPORTION = 1 - Constants.GAMEBOARD_WIDTH_PROPORTION;
+  static SCOREBOARD_WIDTH_PROPORTION =
+    1 - UIConstants.GAMEBOARD_WIDTH_PROPORTION;
 }
+
+export const UnitType = {
+  ZERO_ORDER: 0,
+  BLACK_DELETE: 1,
+  BLACK_PUSH: 2,
+  BLACK_SWITCH: 3,
+  WHITE_DELETE: 19,
+  WHITE_PUSH: 20,
+  WHITE_SWITCH: 21,
+  EMPTY_SPACE: 22,
+  EMPTY_TILE: 23
+};

@@ -1,7 +1,7 @@
 // @flow
 
 import React, {useState} from "react";
-import Constants from "../constants";
+import UIConstants from "../constants";
 import Tile from "./Tile.react";
 
 type Props = {|
@@ -18,8 +18,8 @@ function GameBoard(props: Props) {
   const margin = computeMargin();
 
   function computeRadius() {
-    const availHeight = height - 2 * Constants.GAMEBOARD_PADDING;
-    const availWidth = width - 2 * Constants.GAMEBOARD_PADDING;
+    const availHeight = height - 2 * UIConstants.GAMEBOARD_PADDING;
+    const availWidth = width - 2 * UIConstants.GAMEBOARD_PADDING;
     return Math.min(
       availWidth / (1.5 * numCols + 0.5),
       availHeight / (Math.sqrt(3) * numRows + Math.sqrt(3) / 2)
@@ -33,7 +33,7 @@ function GameBoard(props: Props) {
     } else {
       boardWidth = (3 * radius * numCols) / 2;
     }
-    return (width - 2 * Constants.GAMEBOARD_PADDING - boardWidth) / 2;
+    return (width - 2 * UIConstants.GAMEBOARD_PADDING - boardWidth) / 2;
   }
 
   function createTiles() {
@@ -51,7 +51,7 @@ function GameBoard(props: Props) {
               Y:
                 (Math.sqrt(3) / 2) * (j % 2 === 0 ? 2 : 1) * radius +
                 i * Math.sqrt(3) * radius +
-                Constants.GAMEBOARD_PADDING
+                UIConstants.GAMEBOARD_PADDING
             }}
             relativeCenter={{
               X: i,

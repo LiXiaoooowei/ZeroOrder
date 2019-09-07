@@ -2,7 +2,7 @@
 
 import React, {useEffect, useRef, useState} from "react";
 import ReactDOM from "react-dom";
-import Constants from "../constants";
+import UIConstants from "../constants";
 import Point from "../typeDefinitions";
 
 type Props = {|
@@ -15,7 +15,7 @@ type Props = {|
 function Tile(props: Props) {
   const {absoluteCenter, radius, relativeCenter, handleUnitClick} = props;
   const [radius_adjusted, setRadius] = useState(
-    radius - Constants.UNIT_TILE_MARGIN
+    radius - UIConstants.UNIT_TILE_MARGIN
   );
   const [color, setColor] = useState("white");
 

@@ -2,7 +2,7 @@
 
 import React, {useEffect, useState} from "react";
 import "../css/App.react.css";
-import Constants from "../constants";
+import UIConstants from "../constants";
 import GameBoard from "./GameBoard.react";
 import ScoreBoard from "./ScoreBoard.react";
 
@@ -33,12 +33,12 @@ function App() {
   return (
     <div style={{display: "flex"}}>
       <GameBoard
-        width={width * Constants.GAMEBOARD_WIDTH_PROPORTION}
+        width={width * UIConstants.GAMEBOARD_WIDTH_PROPORTION}
         height={height}
         handleUnitClick={handleUnitClick}
       />
       <ScoreBoard
-        width={width * Constants.SCOREBOARD_WIDTH_PROPORTION}
+        width={width * UIConstants.SCOREBOARD_WIDTH_PROPORTION}
         height={height}
         scores={
           "currentUnit = " +
