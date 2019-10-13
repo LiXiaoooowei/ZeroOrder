@@ -19,11 +19,7 @@ class Unit {
 	getBoardPosition() {
 		return this.position;
 	}
-	// reset at the end of turn
-	resetActivation() {
-		this.has_activated = false;
-	}
-
+	
 	getName() {
 		return this.name;
 	}
@@ -44,23 +40,31 @@ class Unit {
 		return this.is_mobile;
 	}
 	isFreeToActivate() {
-		return (this.isFreeToActivate && !this.has_activated);
+		return (this.isFreeToActivate && !this.has_activated && !this.defeated);
 	}
 	// mark a unit as defeated
 	defeat() {
 		this.defeated = true;
-		this.is_mobile = false;
-		this.free_to_activate = false;
-		this.position = null;
+		// this.is_mobile = false;
+		// this.free_to_activate = false;
+		// this.position = null;
+	}
+	revive() {
+		this.defeated = false;
 	}
 	performAction() {
 		this.has_activated = true;
+	}
+	// reset at the end of turn
+	
+	resetActivation() {
+		this.has_activated = false;
 	}
 	isFreeToMove() {
 		return this.is_mobile;
 	}
 	can_activate(game_board) {
-		if (!this.free_to_activate) {
+		if (!this.free_to_activate || this.defeated) {
 			return false;
 		}
 		return true

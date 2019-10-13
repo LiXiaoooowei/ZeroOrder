@@ -63,8 +63,12 @@ class BoardState {
 	setHexagon(ID, hexagon) {
 		var col = ID[0];
 		var row = ID[1];
-		var array = this.hexagonToArray(hexagon);
+		////////////// handle temp tile, to be changed later
+		if (col < 50) {
+			var array = this.hexagonToArray(hexagon);
 		this.board_matrix[col][row] = array;
+		}
+		
 	}
 	setStatus(state, content) {
 		if (state === 'waiting_movement') {

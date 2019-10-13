@@ -7,7 +7,8 @@ var board_state = require('./boardState');
 // constants for shape of board, see rule.pdf
 const BOARD_SHAPE = [[0, 6], [0, 7], [1, 7], [1, 8], [2,8]];
 const NUM_COLS = 5;
-
+// place holder for intermeidate steps such as switch
+const temp_tile_ID = [100,100]
 
 
 class GameBoard {
@@ -19,8 +20,14 @@ class GameBoard {
 				this.hexagon_list.set(ID_to_key(ID), new Hexagon(ID));
 			}
 		}
+		// list of units to be built
 		this.piece_to_place = [];
-
+		// place holder for intermeidate steps such as switch
+		this.temp_tile = new Hexagon(temp_tile_ID);
+		this.temp_tile.setAsTile();
+		this.hexagon_list.set(ID_to_key(temp_tile_ID), this.temp_tile);
+		// keeps record for movements, activations and builds
+		this.step_log = [];
 	}
 
 	setWhitePlayer(player_ID) {
@@ -40,6 +47,8 @@ class GameBoard {
 		}
 		return neighbours;
 	}
+
+
 	// create an boardstate object for front-end
 	generateBoardState(current_player) {
 		var boardstate = new board_state.BoardState(NUM_COLS, BOARD_SHAPE, this.white_player, current_player);
@@ -48,9 +57,77 @@ class GameBoard {
 		}
 		return boardstate;
 	}
-	
+
 	//////////////////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////// MOVEMENT///////////////////////////////////////////
+	//////////////////////////////////// IRREDUCIBLE STEP ////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////
+	/* Any actual change to gameboard must be executed by one of these functions.
+	 * These steps are easily reversible, hence it makes backtracking easy.
+	 * They should be treated as private functions.
+	 */
+
+	// movement = [ID of starting tile, ID of ending tile]
+	move(movement) {
+		var first_ID = movement[0];
+		var second_ID = movement[1];
+		var first_hexagon =  this.hexagon_list.get(ID_to_key(first_ID));
+		var second_hexagon =  this.hexagon_list.get(ID_to_key(second_ID));
+		var unit = first_hexagon.getUnit();
+		first_hexagon.setUnit(null);
+		second_hexagon.setUnit(unit);
+		unit.setPosition(second_ID);
+	}
+	// target = ID of target tile
+	build(target) {	 	
+		var hexagon = this.hexagon_list.get(ID_to_key(target));
+		hexagon.setAsTile();
+		hexagon.setTileUnit(this.piece_to_place.pop());
+	}
+
+	// freeze() {
+
+	// }
+	// target = ID of tile with defeated unit
+	defeat(target) {
+	 	const hexagon = this.hexagon_list.get(ID_to_key(target));
+	 	const target_unit = hexagon.getUnit();
+	 	target_unit.defeat();
+	 	hexagon.setUnit(null);
+	 	this.piece_to_place.push(target_unit);
+	}
+	// target = ID of the tile with the unit to activate
+	activate(target) {
+	 	const hexagon = this.hexagon_list.get(ID_to_key(target));
+	 	const target_unit = hexagon.getUnit();
+	 	target_unit.performAction();
+	}
+
+	performStepSequence(step_sequence) {
+		for (let idx in step_sequence) {
+			const step = step_sequence[idx];
+			const step_type = step[0];
+			const step_content = step[1];
+			switch(step_type) {
+				case 'move':
+					this.move(step_content);
+					break;
+				case 'build':
+					this.build(step_content);
+					break;
+				case 'defeat':
+					this.defeat(step_content);
+					break;
+				case 'activate':
+					this.activate(step_content);
+					break;
+				default:
+					console.log('UNKNOWN STEP_TYPE IN STEP_SEQUENCE');
+					console.log(step);
+			}
+		}
+	}
+	//////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////// MOVEMENT //////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////
 	
 	//[[unit_position, [target positions]],...]
@@ -101,15 +178,9 @@ class GameBoard {
 		}
 		return true;
 	}
-	performMovement(move) {
-		var first_ID = move[0];
-		var second_ID = move[1];
-		var first_hexagon =  this.hexagon_list.get(ID_to_key(first_ID));
-		var second_hexagon =  this.hexagon_list.get(ID_to_key(second_ID));
-		var unit = first_hexagon.getUnit();
-		first_hexagon.setUnit(null);
-		second_hexagon.setUnit(unit);
-		unit.setPosition(second_ID);
+	performMovement(movement) {
+		this.move(movement);
+		step_log.push(['movement', movement]);
 	}
 	hasFreeTileToGo(tile_ID, player_ID) {
 		var neighbours = get_hexagon_neighbour_ID(tile_ID);
@@ -259,22 +330,18 @@ class GameBoard {
 	}
 	// execute an action
 	performAction(activation) {
-		var unit = activation[0];
-		var target = activation[1];
-
+		const unit = activation[0];
+		const unit_ID = unit.getPosition();
+		const target = activation[1];
+		let step_sequence = [];
+		let hexagon = null;
+		// set unit as activated
+		step_sequence.push(['activate', unit_ID]);
 		switch (unit.getName()) {
 			case 'delete':
-				var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
-				// set unit as activated
-				unit.performAction();
-				// defeat target unit
-				target_unit.defeat();
-				// clean-up gameboard
-				var hexagon = this.hexagon_list.get(ID_to_key(target));
-				hexagon.setUnit(null);
-				this.piece_to_place.push(target_unit);
+				step_sequence.push(['defeat', target]);
 				break;
-			case 'push':				
+			case 'push':
 				var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
 				// set unit as activated
 				unit.performAction();
@@ -286,6 +353,7 @@ class GameBoard {
 				//	[]								#4
 				var off_board_flag = true;
 				var target_defeated = true;
+				// let hexagon = null;
 				for (var i = 0; i < hexagons.length; i++) {
 					hexagon = this.hexagon_list.get(ID_to_key(hexagons[i]));
 					// #2
@@ -303,21 +371,16 @@ class GameBoard {
 				}
 				// if target sruvives (#1)
 				if (!target_defeated) {
-					this.performMovement([target, hexagon.getID()]);
+					step_sequence.push(['move', [target, hexagon.getID()]]);
 				}
 				// if target is defeated but not off map (#2)
 				else if(!off_board_flag){
-					hexagon.setAsTile();
-					var hexagon = this.hexagon_list.get(ID_to_key(target));
-					hexagon.setUnit(null);
-					target_unit.defeat();
+					step_sequence.push(['defeat', target]);
+					step_sequence.push(['build', hexagon.getID()]);
 				}
 				// target is defeated and off map (#3 and #4)
 				else {
-					var hexagon = this.hexagon_list.get(ID_to_key(target));
-					hexagon.setUnit(null);
-					target_unit.defeat();
-					this.piece_to_place.push(target_unit);
+					step_sequence.push(['defeat', target]);
 				}
 				break;
 			case 'toss':
@@ -347,44 +410,36 @@ class GameBoard {
 						break;
 					}
 				}
-				// if target sruvives (#1)
+				// if target survives (#1)
 				if (!target_defeated) {
-					this.performMovement([target, hexagon.getID()]);
+					step_sequence.push(['move', [target, hexagon.getID()]]);
 				}
 				// if target is defeated but not off map (#2)
 				else if(!off_board_flag){
-					hexagon.setAsTile();
-					var hexagon = this.hexagon_list.get(ID_to_key(target));
-					hexagon.setUnit(null);
-					target_unit.defeat();
+					step_sequence.push(['defeat', target]);
+					step_sequence.push(['build', hexagon.getID()]);
 				}
 				// target is defeated and off map (#3 and #4)
 				else {
-					var hexagon = this.hexagon_list.get(ID_to_key(target));
-					hexagon.setUnit(null);
-					target_unit.defeat();
-					this.piece_to_place.push(target_unit);
+					step_sequence.push(['defeat', target]);
 				}
 				break;
 			case 'switch':
-				var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
-				// set unit as activated
-				unit.performAction();
 				// exchange position between 'switch' and target
-				var original_position = unit.getPosition();
-				unit.setPosition(target);
-				target_unit.setPosition(original_position);
-				// update gameboard
-				var hexagon = this.hexagon_list.get(ID_to_key(target));
-				hexagon.setUnit(unit);
-				hexagon = this.hexagon_list.get(ID_to_key(original_position));
-				hexagon.setUnit(target_unit);
+				const first_position = unit_ID;
+				const second_position = target;
+				step_sequence.push(['move',[first_position, temp_tile_ID]]);
+				step_sequence.push(['move',[second_position, first_position]]);
+				step_sequence.push(['move',[temp_tile_ID, second_position]]);
 				break;
 			case 'freeze':
 				break;
 			default:
 				console.log('unknown unit activation' + activation);
 		}
+		// console.log(step_sequence)
+		this.performStepSequence(step_sequence);
+		this.step_log.push(['activation', step_sequence]);
 	}
 
 	// utility functions for unit activation
@@ -465,9 +520,13 @@ class GameBoard {
 	//////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////// BUILDING /////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////
+	
+	// check whether building is required for this turn
 	needBuilding() {
 		return (this.piece_to_place.length != 0);
 	}
+
+	// returns a list of emtpy spaces for building
 	getEmptySpaces() {
 		var empty_spaces = [];
 		for (var pair of this.hexagon_list) {
@@ -484,9 +543,8 @@ class GameBoard {
 		return !hexagon.is_tile;
 	}
 	buildTile(target) {
-		this.piece_to_place.pop();
-		var hexagon = this.hexagon_list.get(ID_to_key(target));
-		hexagon.setAsTile();
+		this.build(target);
+		step_log.push(['building', target])
 	}
 }
 
@@ -497,20 +555,27 @@ class Hexagon {
 		this.is_tile = false;
 		this.unit = null;
 		this.is_empty_tile = false;
-		this.neighbour_ID = get_hexagon_neighbour_ID(ID);
+		if (ID != temp_tile_ID) {
+			this.neighbour_ID = get_hexagon_neighbour_ID(ID);
+		}		
+		this.tile_unit = null;
 		// console.log(ID);
 		// console.log(this.neighbour_ID);
 	}
 	getNeighbourHexagonID() {
-		return this.neighbour_ID
+		return this.neighbour_ID;
 	}
 	setAsTile() {
 		// console.log(this.ID)
 		this.is_tile = true;
 		this.is_empty_tile = true;
 	}
+	setAsNotTile() {
+		this.is_tile = false;
+		this.is_empty_tile = false;
+	}
 	getUnit() {
-		return this.unit
+		return this.unit;
 	}
 	setUnit(unit) {
 		// check if the current hexagon is a tile
@@ -534,6 +599,12 @@ class Hexagon {
 	}
 	getID() {
 		return this.ID;
+	}
+	setTileUnit(unit) {
+		this.tile_unit = unit;
+	}
+	getTileUnit() {
+		return this.tile_unit;
 	}
 }
 
