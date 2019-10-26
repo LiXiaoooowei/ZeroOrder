@@ -15,12 +15,12 @@ class RoundSequence {
 		// movement -> activation -> building -> end_of_turn
 		this.status = 'movement'
 		// pointer for current stage of turn
-		this.activation_pointer = 0
-		this.building_pointer = 0
+		this.activationPointer = 0
+		this.buildingPointer = 0
 		// actual content
 		this.movement = null;
-		this.activation_list = [];
-		this.building_list = [];
+		this.activationList = [];
+		this.buildingList = [];
 	}
 
 	// setters
@@ -34,7 +34,7 @@ class RoundSequence {
 			this.status = 'building';
 		}
 		else {
-			this.activation_list.push(activation);
+			this.activationList.push(activation);
 		}		
 	}
 	setNextBuilding(target) {
@@ -42,7 +42,7 @@ class RoundSequence {
 			this.status = 'end_of_turn';
 		}
 		else {
-			this.building_list.push(target);
+			this.buildingList.push(target);
 		}		
 	}
 
@@ -51,17 +51,17 @@ class RoundSequence {
 		return this.movement;
 	}
 	getNextActivation() {
-		if (this.activation_pointer === this.activation_list.length) {
+		if (this.activationPointer === this.activationList.length) {
 			return null;
 		}
-		var activation = this.activation_list[this.activation_pointer];
-		this.activation_pointer += 1;
-		// console.log(this.activation_list);
+		var activation = this.activationList[this.activationPointer];
+		this.activationPointer += 1;
+		// console.log(this.activationList);
 		return activation;
 	}
 	getNextBuilding() {
-		var building = this.building_list[this.building_pointer];
-		this.building_pointer += 1;
+		var building = this.buildingList[this.buildingPointer];
+		this.buildingPointer += 1;
 		return building;
 	}
 	getStatus() {
@@ -75,19 +75,19 @@ class RoundSequence {
 		if (this.status === 'end_of_turn') {
 			this.status = 'building';
 		}
-		else if (this.building_list.length > 0) {
-			this.building_list.pop();
+		else if (this.buildingList.length > 0) {
+			this.buildingList.pop();
 		}
 		else if (this.status === 'building') {
 			this.status = 'activation';
 		}
-		else if (this.activation_list.length > 0) {
-			const step = this.activation_list.pop();
-			// if (this.activation_list.length === 0) {
+		else if (this.activationList.length > 0) {
+			const step = this.activationList.pop();
+			// if (this.activationList.length === 0) {
 			// 	this.status = 'movement'
 			// }
 		}
-		else if (this.status === 'activation' && this.activation_list.length === 0) {
+		else if (this.status === 'activation' && this.activationList.length === 0) {
 			this.movement = null;
 			this.status = 'movement';
 		}
@@ -99,17 +99,17 @@ class RoundSequence {
 
 	// this duplicates the object
 	copy() {
-		const round_sequence = new RoundSequence(this.playerID);
-		round_sequence.status = this.status;
-		round_sequence.activation_pointer = this.activation_pointer;
-		round_sequence.building_pointer = this.building_pointer;
+		const roundSequence = new RoundSequence(this.playerID);
+		roundSequence.status = this.status;
+		roundSequence.activationPointer = this.activationPointer;
+		roundSequence.buildingPointer = this.buildingPointer;
 		// copy movement
-		round_sequence.movement = JSON.parse(JSON.stringify(this.movement));
+		roundSequence.movement = JSON.parse(JSON.stringify(this.movement));
 		// copy activation
-		round_sequence.activation_list = JSON.parse(JSON.stringify(this.activation_list));
+		roundSequence.activationList = JSON.parse(JSON.stringify(this.activationList));
 		// copy building list
-		round_sequence.building_list = JSON.parse(JSON.stringify(this.building_list));
-		return round_sequence;
+		roundSequence.buildingList = JSON.parse(JSON.stringify(this.buildingList));
+		return roundSequence;
 		// return clone(this);
 	}
 }

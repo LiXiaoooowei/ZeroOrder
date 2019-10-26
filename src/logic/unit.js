@@ -2,19 +2,19 @@
 
 // super class for all units
 class Unit {
-	constructor(player_id) {
-		this.player_id = player_id;
-		this.has_activated = false;
-		this.free_to_activate = true;
+	constructor(playerID) {
+		this.playerID = playerID;
+		this.hasActivated = false;
+		this.freeToActivate = true;
 		this.name = 'unit';
 		this.position = null;
 		this.defeated = false;
-		this.is_mobile = true;
+		this.isMobile = true;
 	}
 
-	setBoardPosition(position) {
-		this.board_position = position;
-	}
+	// setBoardPosition(position) {
+	// 	this.position = position;
+	// }
 
 	getBoardPosition() {
 		return this.position;
@@ -25,7 +25,7 @@ class Unit {
 	}
 
 	getPlayerID() {
-		return this.player_id;
+		return this.playerID;
 	}
 
 	getPosition() {
@@ -37,34 +37,34 @@ class Unit {
 	}
 
 	getMobileStatus() {
-		return this.is_mobile;
+		return this.isMobile;
 	}
 	isFreeToActivate() {
-		return (this.isFreeToActivate && !this.has_activated && !this.defeated);
+		return (this.isFreeToActivate && !this.hasActivated && !this.defeated);
 	}
 	// mark a unit as defeated
 	defeat() {
 		this.defeated = true;
-		// this.is_mobile = false;
-		// this.free_to_activate = false;
+		// this.isMobile = false;
+		// this.freeToActivate = false;
 		// this.position = null;
 	}
 	revive() {
 		this.defeated = false;
 	}
 	performAction() {
-		this.has_activated = true;
+		this.hasActivated = true;
 	}
 	// reset at the end of turn
 	
 	resetActivation() {
-		this.has_activated = false;
+		this.hasActivated = false;
 	}
 	isFreeToMove() {
-		return this.is_mobile;
+		return this.isMobile;
 	}
-	can_activate(game_board) {
-		if (!this.free_to_activate || this.defeated) {
+	can_activate(gameBoard) {
+		if (!this.freeToActivate || this.defeated) {
 			return false;
 		}
 		return true
@@ -73,93 +73,93 @@ class Unit {
 
 
 class Delete extends Unit {
-	constructor(player_id) {
-		super(player_id);
+	constructor(playerID) {
+		super(playerID);
 		this.name = 'delete';
 	}
 
 	
-	delete_any(game_board){
-		var hexagon_list = game_board.get_hexagon_neighbours(this.position);
-		var target = hexagon_list[0].getID()
+	delete_any(gameBoard){
+		var hexagonList = gameBoard.get_hexagon_neighbours(this.position);
+		var target = hexagonList[0].getID()
 		return target;
 
 	}
-	getActivations(game_board){
-		return game_board.getNeighbouringEnemies(this.player_id, this.position);
+	getActivations(gameBoard){
+		return gameBoard.getNeighbouringEnemies(this.playerID, this.position);
 	}
 
 	
 }
 
 class Push extends Unit {
-	constructor(player_id) {
-		super(player_id);
+	constructor(playerID) {
+		super(playerID);
 		this.name = 'push';
 	}
 
-	getActivations(game_board){
-		var neighbouring_enemies = game_board.getNeighbouringEnemies(this.player_id, this.position);
-		var valid_targets = [];
-		for (var i = 0; i < neighbouring_enemies.length; i++) {
-			var enemy_pos = neighbouring_enemies[i];
-			var target_ID = game_board.getNextHexInDirection(this.position, enemy_pos);
+	getActivations(gameBoard){
+		var neighbouringEnemies = gameBoard.getNeighbouringEnemies(this.playerID, this.position);
+		var validTargets = [];
+		for (var i = 0; i < neighbouringEnemies.length; i++) {
+			var enemyPos = neighbouringEnemies[i];
+			var targetID = gameBoard.getNextHexInDirection(this.position, enemyPos);
 			// the action is valid if the space behind target is out of map
-			if (target_ID === null){
-				valid_targets.push(enemy_pos);
+			if (targetID === null){
+				validTargets.push(enemyPos);
 			}
 			// the action is valid if the space behind target is an empty tile
-			else if (game_board.getHexagon(target_ID).is_empty_tile) {
-				valid_targets.push(enemy_pos);
+			else if (gameBoard.getHexagon(targetID).isEmptyTile) {
+				validTargets.push(enemyPos);
 			}
 			// (the action is not valid if the space behind target is an occupied tile)
 		}
-		return valid_targets;
+		return validTargets;
 	}
 }
 
 class Toss extends Unit {
-	constructor(player_id) {
-		super(player_id);
+		constructor(playerID) {
+		super(playerID);
 		this.name = 'toss';
 	}
 
-	getActivations(game_board){
-		var neighbouring_enemies = game_board.getNeighbouringEnemies(this.player_id, this.position);
-		var valid_targets = [];
-		for (var i = 0; i < neighbouring_enemies.length; i++) {
-			var enemy_pos = neighbouring_enemies[i];
-			var target_ID = game_board.getNextHexInOppDirection(this.position, enemy_pos);
+	getActivations(gameBoard){
+		var neighbouringEnemies = gameBoard.getNeighbouringEnemies(this.playerID, this.position);
+		var validTargets = [];
+		for (var i = 0; i < neighbouringEnemies.length; i++) {
+			var enemyPos = neighbouringEnemies[i];
+			var targetID = gameBoard.getNextHexInOppDirection(this.position, enemyPos);
 			// the action is valid if the space behind target is out of map
-			if (target_ID === null){
-				valid_targets.push(enemy_pos);
+			if (targetID === null){
+				validTargets.push(enemyPos);
 			}
 			// the action is valid if the space behind target is an empty tile
-			else if (game_board.getHexagon(target_ID).is_empty_tile) {
-				valid_targets.push(enemy_pos);
+			else if (gameBoard.getHexagon(targetID).isEmptyTile) {
+				validTargets.push(enemyPos);
 			}
 			// (the action is not valid if the space behind target is an occupied tile)
 		}
-		return valid_targets;
+		return validTargets;
 	}
 }
 
 class Switch extends Unit {
-	constructor(player_id) {
-		super(player_id);
+	constructor(playerID) {
+		super(playerID);
 		this.name = 'switch';
 	}
 
-	getActivations(game_board){
-		var friendly_units = game_board.getFriendlyUnits(this.player_id);
-		var valid_targets = [];
-		for (var i = 0; i < friendly_units.length; i++) {
-			var unit = game_board.getHexagon(friendly_units[i]).getUnit();
+	getActivations(gameBoard){
+		var friendlyUnits = gameBoard.getFriendlyUnits(this.playerID);
+		var validTargets = [];
+		for (var i = 0; i < friendlyUnits.length; i++) {
+			var unit = gameBoard.getHexagon(friendlyUnits[i]).getUnit();
 			if (!unit.defeated && unit.getName() != 'switch') {
-				valid_targets.push(unit.getPosition());
+				validTargets.push(unit.getPosition());
 			}
 		}
-		return valid_targets;
+		return validTargets;
 	}
 }
 

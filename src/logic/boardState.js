@@ -1,14 +1,14 @@
 'use strict';
 
-/* 	board_state is an array with the following:
-*	board_state[0]: number of columns of game board
-*	board_state[1]: a 2D array specifying valid locations on each column
-* 	board_state[2]: a matrix representation of game board. Each loaction is represented as [UNIT, ABLE_TO_MOVE]
-*	board_state[3]: name of white player
-*	board_state[4]: name of current player
-* 	board_state[5]: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
+/* 	boardState is an array with the following:
+*	boardState[0]: number of columns of game board
+*	boardState[1]: a 2D array specifying valid locations on each column
+* 	boardState[2]: a matrix representation of game board. Each loaction is represented as [UNIT, ABLE_TO_MOVE]
+*	boardState[3]: name of white player
+*	boardState[4]: name of current player
+* 	boardState[5]: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
 *					or BLACK_WIN
-*	board_state[6]: if the game is pending movement, it contents a list of valid movements,
+*	boardState[6]: if the game is pending movement, it contents a list of valid movements,
 *					each movement is represented as [starting location, [list of valid ending locations]]
 *					if the game is pending activation, it contents a list of valid activations, 
 *					each activation is represented as [name of unit, location, [list of valid targets]]
@@ -41,24 +41,24 @@ WHITE_WIN = 3,
 BLACK_WIN = 4;
 
 class BoardState {
-	constructor(num_col, board_shape, white_player, current_player) {
-		this.num_col = num_col;
-		this.board_shape = board_shape;
-		this.white_player = white_player;
-		this.current_player = current_player;
-		this.board_matrix = [];
-		for (var i = 0; i < num_col; i++) {
-			this.board_matrix.push([]);
-			for (var j = 0; j <= board_shape[i][1]; j++) {
-				this.board_matrix[i].push(null);
-				if (j >= board_shape[i][0]) {
-					this.board_matrix[i][j] = [EMPTY_TILE,false]
+	constructor(numCol, boardShape, whitePlayer, currentPlayer) {
+		this.numCol = numCol;
+		this.boardShape = boardShape;
+		this.whitePlayer = whitePlayer;
+		this.currentPlayer = currentPlayer;
+		this.baordMatrix = [];
+		for (var i = 0; i < numCol; i++) {
+			this.baordMatrix.push([]);
+			for (var j = 0; j <= boardShape[i][1]; j++) {
+				this.baordMatrix[i].push(null);
+				if (j >= boardShape[i][0]) {
+					this.baordMatrix[i][j] = [EMPTY_TILE,false]
 				}
 			}
 		}
 	}
 	getBoardState() {
-		return [this.num_col, this.board_shape, this.board_matrix, this.white_player, this.current_player, this.state, this.content];
+		return [this.numCol, this.boardShape, this.baordMatrix, this.whitePlayer, this.currentPlayer, this.state, this.content];
 	}
 	setHexagon(ID, hexagon) {
 		var col = ID[0];
@@ -66,7 +66,7 @@ class BoardState {
 		////////////// handle temp tile, to be changed later
 		if (col < 50) {
 			var array = this.hexagonToArray(hexagon);
-		this.board_matrix[col][row] = array;
+		this.baordMatrix[col][row] = array;
 		}
 		
 	}
@@ -93,16 +93,16 @@ class BoardState {
 	hexagonToArray(hexagon) {
 		var array = [];
 		// the space is not a tile
-		if (!hexagon.isTile()){
+		if (!hexagon.checkIsTile()){
 			return [EMPTY_SPACE, false];
 		}
 		// the space has no unit
-		if (hexagon.isEmptyTile()){
+		if (hexagon.checkIsEmptyTile()){
 			return [EMPTY_TILE, false];
 		}
 		// the tile is occupied by a unit
 		var colour, offset;
-		if (hexagon.getUnit().getPlayerID() == this.white_player) {
+		if (hexagon.getUnit().getPlayerID() == this.whitePlayer) {
 			// colour = white;
 			offset = 16;
 		}

@@ -1,6 +1,6 @@
 'use strict';
 
-var gameboard = require('./gameBoard');
+var Gameboard = require('./gameBoard');
 var unit = require('./unit');
 
 /*	This class is used by AI player to simulate game board for planning purpose
@@ -8,28 +8,28 @@ var unit = require('./unit');
 	performed in the current turn.
 */
 
-class GameBoardAI extends gameboard.GameBoard {
+class GameBoardAI extends Gameboard.GameBoard {
 
-	constructor(board_state, player_name) {
+	constructor(boardState, playerName) {
 		super();		
-		if (board_state != null) {
-			this.setupGameBoard(board_state, player_name);
+		if (boardState != null) {
+			this.setupGameBoard(boardState, playerName);
 		}
-		this.turn_status = 'movement';
+		this.turnStatus = 'movement';
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////// BOARDSTATE ////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////
-	/* 	board_state is an array with the following:
-	*	board_state[0]: number of columns of game board
-	*	board_state[1]: a 2D array specifying valid locations on each column
-	* 	board_state[2]: a matrix representation of game board. Each loaction is represented as [UNIT, ABLE_TO_MOVE]
-	*	board_state[3]: name of white player
-	*	board_state[4]: name of current player
-	* 	board_state[5]: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
+	/* 	boardState is an array with the following:
+	*	boardState[0]: number of columns of game board
+	*	boardState[1]: a 2D array specifying valid locations on each column
+	* 	boardState[2]: a matrix representation of game board. Each loaction is represented as [UNIT, ABLE_TO_MOVE]
+	*	boardState[3]: name of white player
+	*	boardState[4]: name of current player
+	* 	boardState[5]: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
 	*					or BLACK_WIN
-	*	board_state[6]: if the game is pending movement, it contents a list of valid movements,
+	*	boardState[6]: if the game is pending movement, it contents a list of valid movements,
 	*					each movement is represented as [starting location, [list of valid ending locations]]
 	*					if the game is pending activation, it contents a list of valid activations, 
 	*					each activation is represented as [name of unit, location, [list of valid targets]]
@@ -37,73 +37,73 @@ class GameBoardAI extends gameboard.GameBoard {
 	*					list of non-tile spaces.
 	*/
 	// initialise gameboard from boardstate
-	// ASSUMPTION: board_state is at PENDING_MOVE!!!
-	setupGameBoard(board_state, player_name) {
+	// ASSUMPTION: boardState is at PENDING_MOVE!!!
+	setupGameBoard(boardState, playerName) {
 		// set white player
-		this.setWhitePlayer(board_state[3]);
+		this.setWhitePlayer(boardState[3]);
 		// determine current player colour
-		let current_player = board_state[4];
-		// const current_player_colour = ;
-		let current_player_colour = '??'
-		if (board_state[3] === current_player){
-			current_player_colour = 'white';
+		let currentPlayer = boardState[4];
+		// const currentPlayerColour = ;
+		let currentPlayerColour = '??'
+		if (boardState[3] === currentPlayer){
+			currentPlayerColour = 'white';
 		}
 		else {
-			current_player_colour = 'black';
+			currentPlayerColour = 'black';
 		}
 		// set name for the other player
-		current_player = player_name;
-		// console.log(current_player)
-		const other_player = 'not'+current_player;
+		currentPlayer = playerName;
+		// console.log(currentPlayer)
+		const otherPlayer = 'not'+currentPlayer;
 		// set units and tiles
-		let unit_list = [];
-		const num_col = board_state[0];
-		for (let i = 0; i < num_col; i++) {
-			for (let j = board_state[1][i][0]; j <= board_state[1][i][1]; j++) {
-				const tile_status = board_state[2][i][j];
-				const unit_idx = tile_status[0];
-				const unit_status = tile_status[1];
+		let unitList = [];
+		const numCol = boardState[0];
+		for (let i = 0; i < numCol; i++) {
+			for (let j = boardState[1][i][0]; j <= boardState[1][i][1]; j++) {
+				const tileStatus = boardState[2][i][j];
+				const unitIdx = tileStatus[0];
+				const unitStatus = tileStatus[1];
 				// skip if there is no unit at this position
-				if (unit_idx === 37) {
+				if (unitIdx === 37) {
 					continue;
 				}
 				// set the position as empty tile
-				else if (unit_idx === 38) {
-					const tile_position = [i, j]
-					const hexagon = this.hexagon_list.get(ID_to_key(tile_position));
+				else if (unitIdx === 38) {
+					const tilePosition = [i, j]
+					const hexagon = this.hexagonList.get(IDToKey(tilePosition));
 					hexagon.setAsTile();
 					continue;
 				}
-				let new_unit = null;
+				let newUnit = null;
 				// determine which player the unit is belonged to
-				let unit_owner = current_player;
-				if ((current_player_colour === 'white' && unit_idx < 16) ||
-					(current_player_colour === 'black' && unit_idx >= 16)) {
-					unit_owner = other_player;
+				let unitOwner = currentPlayer;
+				if ((currentPlayerColour === 'white' && unitIdx < 16) ||
+					(currentPlayerColour === 'black' && unitIdx >= 16)) {
+					unitOwner = otherPlayer;
 				}
-				// console.log(current_player, unit_owner, current_player_colour, unit_idx, i, j)
-				switch(unit_idx%16) {
+				// console.log(currentPlayer, unitOwner, currentPlayerColour, unitIdx, i, j)
+				switch(unitIdx%16) {
 					case 1:
-						new_unit = new unit.Delete(unit_owner);
+						newUnit = new unit.Delete(unitOwner);
 						break;
 					case 2:
-						new_unit = new unit.Push(unit_owner);
+						newUnit = new unit.Push(unitOwner);
 						break;
 					case 3:
-						new_unit = new unit.Switch(unit_owner);
+						newUnit = new unit.Switch(unitOwner);
 						break;
 					case 4:
-						new_unit = new unit.Toss(unit_owner);
+						newUnit = new unit.Toss(unitOwner);
 						break;
 					default:
 						console.log('UNKNOWN UNIT TYPE WHEN CONSTRUCTING AIGAMEBOARD');
-						console.log(tile_status);
+						console.log(tileStatus);
 				}
-				const tile_position = [i, j]
-				const hexagon = this.hexagon_list.get(ID_to_key(tile_position));
+				const tilePosition = [i, j]
+				const hexagon = this.hexagonList.get(IDToKey(tilePosition));
 				hexagon.setAsTile();
-				new_unit.setPosition(tile_position);
-				hexagon.setUnit(new_unit);
+				newUnit.setPosition(tilePosition);
+				hexagon.setUnit(newUnit);
 			}
 		}
 		// set units status
@@ -128,17 +128,17 @@ class GameBoardAI extends gameboard.GameBoard {
 		const activations = super.getAllValidActivations(player_id);
 		let choices = [null];	// null -> skip activation
 		for (let i = 0; i < activations.length; i++) {
-			const unit_name = activations[i][0];
-			const unit_position = activations[i][1];
+			const unitName = activations[i][0];
+			const unitPosition = activations[i][1];
 			for (let j = 0; j < activations[i][2].length; j++) {
 				const target = activations[i][2][j];
-				choices.push([unit_position, target, unit_name]);
+				choices.push([unitPosition, target, unitName]);
 			}
 		}
 		return choices;
 	}
 	getEmptySpaces() {
-		if (this.piece_to_place.length === 0) {
+		if (this.pieceToPlace.length === 0) {
 			return [null];
 		}
 		else {
@@ -148,7 +148,7 @@ class GameBoardAI extends gameboard.GameBoard {
 
 	buildTile(target) {
 		if (target === null) {
-			this.step_log.push(['building', null]);
+			this.stepLog.push(['building', null]);
 		}
 		else {
 			super.buildTile(target);
@@ -159,25 +159,25 @@ class GameBoardAI extends gameboard.GameBoard {
 	//////////////////////////////////////////////////////////////////////////////////////////
 	// movement = [ID of starting tile, ID of ending tile]
 	reverseMove(movement) {
-		const first_ID = movement[1];
-		const second_ID = movement[0];
-		const first_hexagon =  this.hexagon_list.get(ID_to_key(first_ID));
-		const second_hexagon =  this.hexagon_list.get(ID_to_key(second_ID));
-		const unit = first_hexagon.getUnit();
-		first_hexagon.setUnit(null);
-		second_hexagon.setUnit(unit);
-		unit.setPosition(second_ID);
+		const firstID = movement[1];
+		const secondID = movement[0];
+		const firstHexagon =  this.hexagonList.get(IDToKey(firstID));
+		const secondHexagon =  this.hexagonList.get(IDToKey(secondID));
+		const unit = firstHexagon.getUnit();
+		firstHexagon.setUnit(null);
+		secondHexagon.setUnit(unit);
+		unit.setPosition(secondID);
 	}
 	// target = ID of target tile
 	reverseBuild(target) {	 
 		if (target === null) {
 			return;
 		}	
-		const hexagon = this.hexagon_list.get(ID_to_key(target));
+		const hexagon = this.hexagonList.get(IDToKey(target));
 		const unit = hexagon.getTileUnit();
 		hexagon.setAsNotTile();
 		hexagon.setTileUnit(null);
-		this.piece_to_place.push(unit);
+		this.pieceToPlace.push(unit);
 	}
 
 	// freeze() {
@@ -185,40 +185,40 @@ class GameBoardAI extends gameboard.GameBoard {
 	// }
 	// target = ID of tile with defeated unit
 	reverseDefeat(target) {
-	 	const hexagon = this.hexagon_list.get(ID_to_key(target));
-	 	const target_unit = this.piece_to_place.pop();
-	 	target_unit.revive();
-	 	hexagon.setUnit(target_unit);
+	 	const hexagon = this.hexagonList.get(IDToKey(target));
+	 	const targetUnit = this.pieceToPlace.pop();
+	 	targetUnit.revive();
+	 	hexagon.setUnit(targetUnit);
 	}
 	// target = ID of the tile with the unit to activate
 	reverseActivate(target) {
-	 	const hexagon = this.hexagon_list.get(ID_to_key(target));
-	 	const target_unit = hexagon.getUnit();
-	 	target_unit.resetActivation();
+	 	const hexagon = this.hexagonList.get(IDToKey(target));
+	 	const targetUnit = hexagon.getUnit();
+	 	targetUnit.resetActivation();
 	}
 
 	// reverse steps performed in one activation
-	reverseStepSequence(step_sequence) {
-		step_sequence.reverse();
-		for (let idx in step_sequence) {
-			const step = step_sequence[idx];
-			const step_type = step[0];
-			const step_content = step[1];
-			switch(step_type) {
+	reverseStepSequence(stepSequence) {
+		stepSequence.reverse();
+		for (let idx in stepSequence) {
+			const step = stepSequence[idx];
+			const stepType = step[0];
+			const stepContent = step[1];
+			switch(stepType) {
 				case 'move':
-					this.reverseMove(step_content);
+					this.reverseMove(stepContent);
 					break;
 				case 'build':
-					this.reverseBuild(step_content);
+					this.reverseBuild(stepContent);
 					break;
 				case 'defeat':
-					this.reverseDefeat(step_content);
+					this.reverseDefeat(stepContent);
 					break;
 				case 'activate':
-					this.reverseActivate(step_content);
+					this.reverseActivate(stepContent);
 					break;
 				default:
-					console.log('UNKNOWN STEP_TYPE IN STEP_SEQUENCE');
+					console.log('UNKNOWN stepType IN stepSequence');
 					console.log(step);
 			}
 		}
@@ -226,18 +226,18 @@ class GameBoardAI extends gameboard.GameBoard {
 
 	// backtrack one step in the current turn
 	backtrack() {
-		const last_step = this.step_log.pop();
-		const step_type = last_step[0];
-		const step_content = last_step[1];
-		switch (step_type) {
+		const lastStep = this.stepLog.pop();
+		const stepType = lastStep[0];
+		const stepContent = lastStep[1];
+		switch (stepType) {
 			case 'movement':
-				this.reverseMove(step_content);
+				this.reverseMove(stepContent);
 				break;
 			case 'activation':
-				this.reverseStepSequence(step_content);
+				this.reverseStepSequence(stepContent);
 				break;
 			case 'building':
-				this.reverseBuild(step_content);
+				this.reverseBuild(stepContent);
 				break;
 			// case 'end-of-turn':
 			// 	break;
@@ -250,7 +250,7 @@ class GameBoardAI extends gameboard.GameBoard {
 
 
 // [i,j] ==> 'i-j'
-function ID_to_key(ID) {
+function IDToKey(ID) {
 	// console.log(ID);
 	var i = ID[0];
 	var j = ID[1];
