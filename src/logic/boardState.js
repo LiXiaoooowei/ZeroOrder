@@ -47,9 +47,9 @@ class BoardState {
 		this.whitePlayer = whitePlayer;
 		this.currentPlayer = currentPlayer;
 		this.baordMatrix = [];
-		for (var i = 0; i < numCol; i++) {
+		for (let i = 0; i < numCol; i++) {
 			this.baordMatrix.push([]);
-			for (var j = 0; j <= boardShape[i][1]; j++) {
+			for (let j = 0; j <= boardShape[i][1]; j++) {
 				this.baordMatrix[i].push(null);
 				if (j >= boardShape[i][0]) {
 					this.baordMatrix[i][j] = [EMPTY_TILE,false]
@@ -61,12 +61,12 @@ class BoardState {
 		return [this.numCol, this.boardShape, this.baordMatrix, this.whitePlayer, this.currentPlayer, this.state, this.content];
 	}
 	setHexagon(ID, hexagon) {
-		var col = ID[0];
-		var row = ID[1];
+		const col = ID[0];
+		const row = ID[1];
 		////////////// handle temp tile, to be changed later
 		if (col < 50) {
-			var array = this.hexagonToArray(hexagon);
-		this.baordMatrix[col][row] = array;
+			const array = this.hexagonToArray(hexagon);
+			this.baordMatrix[col][row] = array;
 		}
 		
 	}
@@ -91,7 +91,7 @@ class BoardState {
 	}
 	
 	hexagonToArray(hexagon) {
-		var array = [];
+		let array = [];
 		// the space is not a tile
 		if (!hexagon.checkIsTile()){
 			return [EMPTY_SPACE, false];
@@ -101,7 +101,7 @@ class BoardState {
 			return [EMPTY_TILE, false];
 		}
 		// the tile is occupied by a unit
-		var colour, offset;
+		let colour, offset;
 		if (hexagon.getUnit().getPlayerID() == this.whitePlayer) {
 			// colour = white;
 			offset = 16;
@@ -110,8 +110,8 @@ class BoardState {
 			// colour = black;
 			offset = 0;
 		}
-		var name = hexagon.getUnit().getName();
-		var num = 0;
+		const name = hexagon.getUnit().getName();
+		let num = 0;
 		if (name === 'delete'){
 			num = 1+offset;
 		}

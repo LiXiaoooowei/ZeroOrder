@@ -1,7 +1,7 @@
 'use strict';
 
-var Gameboard = require('./gameBoard');
-var unit = require('./unit');
+const Gameboard = require('./gameBoard');
+const unit = require('./unit');
 
 /*	This class is used by AI player to simulate game board for planning purpose
 	The key difference is that this class allows the player to backtrack steps 
@@ -252,17 +252,17 @@ class GameBoardAI extends Gameboard.GameBoard {
 // [i,j] ==> 'i-j'
 function IDToKey(ID) {
 	// console.log(ID);
-	var i = ID[0];
-	var j = ID[1];
-	var key = i.toString()+'-'+j.toString();
+	const i = ID[0];
+	const j = ID[1];
+	const key = i.toString()+'-'+j.toString();
 	return key;
 }
 
 // 'i-j' => [i,j]
 function key_to_ID(key) {
-	var tokens = key.split('-');
-	var i = parseInt(tokens[0]);
-	var j = parseInt(tokens[1]);
+	const tokens = key.split('-');
+	const i = parseInt(tokens[0]);
+	const j = parseInt(tokens[1]);
 	return [i, j];
 }
 

@@ -1,7 +1,7 @@
 'use strict';
 
-var RoundSequence = require('./roundSequence');
-var GameBoardAI = require('./gameBoardAI');
+const RoundSequence = require('./roundSequence');
+const GameBoardAI = require('./gameBoardAI');
 
 class Player {
 	constructor(name) {
@@ -15,7 +15,7 @@ class Player {
 
 	addUnit(unit) {
 		// check if the player already has the unit
-		for (var i in this.unitList.length){
+		for (let i in this.unitList.length){
 			if (unit.getName === this.unitList[i]){
 				return false;
 			}
@@ -25,8 +25,8 @@ class Player {
 	}
 
 	getMobileUnitList() {
-		var list = []
-		for (var i = 0; i < this.unitList.length; i++){
+		let list = []
+		for (let i = 0; i < this.unitList.length; i++){
 			if (this.unitList[i].getMobileStatus()){
 				list.push(this.unitList[i]);
 			}
@@ -47,12 +47,12 @@ class Player {
 	}
 
 	resetUnitActivation() {
-		for (var i = 0; i < this.unitList.length; i++) {
+		for (let i = 0; i < this.unitList.length; i++) {
 			this.unitList[i].resetActivation();
 		}
 	}
 	getUnitWithName(name) {
-		for (var i = 0; i < this.unitList.length; i++) {
+		for (let i = 0; i < this.unitList.length; i++) {
 			if (name === this.unitList[i].getName()){
 				return this.unitList[i];
 			}
@@ -196,10 +196,10 @@ class AI extends Player {
 	// make a random move from list of valid momements
 	makeMoveRandom(validMovements) {
 
-		var rand1 = Math.floor(Math.random()*validMovements.length);
-		var unitPosition = validMovements[rand1][0];
-		var rand2 = Math.floor(Math.random()*validMovements[rand1][1].length);
-		var newPosition = validMovements[rand1][1][rand2];
+		const rand1 = Math.floor(Math.random()*validMovements.length);
+		const unitPosition = validMovements[rand1][0];
+		const rand2 = Math.floor(Math.random()*validMovements[rand1][1].length);
+		const newPosition = validMovements[rand1][1][rand2];
 		return [unitPosition, newPosition];
 	}
 
@@ -219,17 +219,17 @@ class AI extends Player {
 		// 	}
 				
 		// }
-		var rand1 = Math.floor(Math.random()*validActivations.length);
+		const rand1 = Math.floor(Math.random()*validActivations.length);
 		// var unit = this.getUnitWithName(validActivations[rand1][0]);
 		const unit = validActivations[rand1][1];
-		var rand2 = Math.floor(Math.random()*validActivations[rand1][2].length);
-		var target = validActivations[rand1][2][rand2];
+		const rand2 = Math.floor(Math.random()*validActivations[rand1][2].length);
+		const target = validActivations[rand1][2][rand2];
 		return [unit, target, validActivations[rand1][0]];
 	}
 
 	// randomly choose an empty space to place the new tile
 	placeTileRandom(emptySpaces) {
-		var rand = Math.floor(Math.random()*emptySpaces.length);
+		const rand = Math.floor(Math.random()*emptySpaces.length);
 		return emptySpaces[rand];
 	}
 }
@@ -244,8 +244,8 @@ class Human extends Player {
 
 function clone(obj) {
     if (null == obj || "object" != typeof obj) return obj;
-    var copy = new obj.constructor();
-    for (var attr in obj) {
+    const copy = new obj.constructor();
+    for (let attr in obj) {
         if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
     }
     // console.log(copy)

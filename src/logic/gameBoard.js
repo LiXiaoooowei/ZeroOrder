@@ -1,6 +1,6 @@
 'use strict';
 
-var BoardState = require('./boardState');
+const BoardState = require('./boardState');
 
 // Game board and hexagons
 
@@ -14,9 +14,9 @@ const tempTileID = [100,100]
 class GameBoard {
 	constructor() {
 		this.hexagonList = new Map();
-		for(var i = 0; i < NUM_COLS; i++){
-			for(var j = BOARD_SHAPE[i][0]; j <= BOARD_SHAPE[i][1]; j++){
-				var ID = [i,j];
+		for(let i = 0; i < NUM_COLS; i++){
+			for(let j = BOARD_SHAPE[i][0]; j <= BOARD_SHAPE[i][1]; j++){
+				const ID = [i,j];
 				this.hexagonList.set(IDTokey(ID), new Hexagon(ID));
 			}
 		}
@@ -40,9 +40,9 @@ class GameBoard {
 
 	get_hexagon_neighbours(ID) {
 		// var IDList = getHexagonNeighbourID(ID);		
-		var IDList = this.hexagonList.get(IDTokey(ID)).getNeighbourHexagonID();
-		var neighbours = [];
-		for (var i = 0; i < IDList.length; i++) {
+		const IDList = this.hexagonList.get(IDTokey(ID)).getNeighbourHexagonID();
+		const neighbours = [];
+		for (let i = 0; i < IDList.length; i++) {
 			neighbours.push(this.hexagonList.get(IDTokey(IDList[i])));
 		}
 		return neighbours;
@@ -51,8 +51,8 @@ class GameBoard {
 
 	// create an boardstate object for front-end
 	generateBoardState(currentPlayer) {
-		var boardstate = new BoardState.BoardState(NUM_COLS, BOARD_SHAPE, this.whitePlayer, currentPlayer);
-		for (var pair of this.hexagonList) {
+		const boardstate = new BoardState.BoardState(NUM_COLS, BOARD_SHAPE, this.whitePlayer, currentPlayer);
+		for (let pair of this.hexagonList) {
 			boardstate.setHexagon(keyToID(pair[0]),pair[1]);
 		}
 		return boardstate;
@@ -68,18 +68,18 @@ class GameBoard {
 
 	// movement = [ID of starting tile, ID of ending tile]
 	move(movement) {
-		var firstID = movement[0];
-		var secondID = movement[1];
-		var firstHexagon =  this.hexagonList.get(IDTokey(firstID));
-		var secondHexagon =  this.hexagonList.get(IDTokey(secondID));
-		var unit = firstHexagon.getUnit();
+		const firstID = movement[0];
+		const secondID = movement[1];
+		const firstHexagon =  this.hexagonList.get(IDTokey(firstID));
+		const secondHexagon =  this.hexagonList.get(IDTokey(secondID));
+		const unit = firstHexagon.getUnit();
 		firstHexagon.setUnit(null);
 		secondHexagon.setUnit(unit);
 		unit.setPosition(secondID);
 	}
 	// target = ID of target tile
 	build(target) {	 	
-		var hexagon = this.hexagonList.get(IDTokey(target));
+		const hexagon = this.hexagonList.get(IDTokey(target));
 		hexagon.setAsTile();
 		hexagon.setTileUnit(this.pieceToPlace.pop());
 	}
@@ -132,12 +132,12 @@ class GameBoard {
 	
 	//[[unitPosition, [target positions]],...]
 	getAllValidMoves(playerID) {
-		var movementList = [];		
+		let movementList = [];		
 		// loop through all hexagons
-		for (var pair of this.hexagonList) {
-			var key = pair[0];
-			var hexagon = pair[1];
-			var unit = hexagon.getUnit();
+		for (let pair of this.hexagonList) {
+			const key = pair[0];
+			const hexagon = pair[1];
+			const unit = hexagon.getUnit();
 			
 			if (unit === null) {
 				continue;
@@ -148,8 +148,8 @@ class GameBoard {
 				continue;
 			}
 			// get valid movement of the piece
-			var tileID = keyToID(key);
-			var targets = this.getTilesToMove(tileID, playerID);
+			const tileID = keyToID(key);
+			const targets = this.getTilesToMove(tileID, playerID);
 			// console.log(targets)
 			if (targets.length > 0) {
 				movementList.push([keyToID(key), targets]);
@@ -159,11 +159,11 @@ class GameBoard {
 		return movementList;
 	}
 	isValidMove(move, playerID) {
-		var startingPos = move[0];
-		var endingPos = move[1];
+		const startingPos = move[0];
+		const endingPos = move[1];
 		// check if starting pos has player's piece
-		var hexagon = this.getHexagon(startingPos);
-		var unit = hexagon.getUnit();
+		const hexagon = this.getHexagon(startingPos);
+		const unit = hexagon.getUnit();
 		if (unit === null){
 			return false;
 		}
@@ -171,7 +171,7 @@ class GameBoard {
 			return false;
 		}
 		// check if ending pos is avaliable
-		var secHexagon = this.getHexagon(endingPos);
+		const secHexagon = this.getHexagon(endingPos);
 		// console.log(secHexagon.isEmptyTile)
 		//!!!!!!!!!!!!!!!!!!!!!
 		if (!secHexagon.isEmptyTile) {
@@ -184,9 +184,9 @@ class GameBoard {
 		this.stepLog.push(['movement', movement]);
 	}
 	hasFreeTileToGo(tileID, playerID) {
-		var neighbours = getHexagonNeighbourID(tileID);
-		for (var i = 0; i < neighbours.length; i++){
-			var hexagon = this.getHexagon(neighbours[i]);
+		const neighbours = getHexagonNeighbourID(tileID);
+		for (let i = 0; i < neighbours.length; i++){
+			const hexagon = this.getHexagon(neighbours[i]);
 			if (hexagon.checkIsEmptyTile()){
 				return true;
 			}
@@ -194,10 +194,10 @@ class GameBoard {
 		return false;
 	}
 	getTilesToMove(tileID, playerID) {
-		var validTiles = [];
-		var neighbours = getHexagonNeighbourID(tileID);
-		for (var i = 0; i < neighbours.length; i++){
-			var hexagon = this.getHexagon(neighbours[i]);
+		const validTiles = [];
+		const neighbours = getHexagonNeighbourID(tileID);
+		for (let i = 0; i < neighbours.length; i++){
+			const hexagon = this.getHexagon(neighbours[i]);
 			if (hexagon.checkIsEmptyTile()){
 				validTiles.push(hexagon.getID());
 			}
@@ -211,12 +211,12 @@ class GameBoard {
 	
 	//[['unit_name', unitPosition, [target list]],...]
 	getAllValidActivations(playerID) {
-		var activationList = [];
+		let activationList = [];
 		// loop through all hexagons
-		for (var pair of this.hexagonList) {
-			var key = pair[0];
-			var hexagon = pair[1];
-			var unit = hexagon.getUnit();
+		for (let pair of this.hexagonList) {
+			const key = pair[0];
+			const hexagon = pair[1];
+			const unit = hexagon.getUnit();
 			if (unit === null) {
 				continue;
 			}
@@ -225,7 +225,7 @@ class GameBoard {
 				continue;
 			}
 			// get valid activations of the piece
-			var targets = unit.getActivations(this);
+			const targets = unit.getActivations(this);
 			// console.log(targets)
 			if (targets.length > 0) {
 				activationList.push([unit.getName(), keyToID(key), targets]);
@@ -244,12 +244,12 @@ class GameBoard {
 		const unitPosition = activation[0];
 		const initialHexagon = this.hexagonList.get(IDTokey(unitPosition));
 		const unit = initialHexagon.getUnit();
-		var target = activation[1];
+		const target = activation[1];
 		// the unit must be free to activate and has not yet activated
 		if (!unit.freeToActivate || unit.hasActivated) {
 			return false;
 		}
-		var targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
+		const targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
 		// the unit must be correct type
 		if (unit.getName() != activation[2]) {
 			return false;
@@ -270,11 +270,14 @@ class GameBoard {
 					return false;
 				}
 		}	
+		// some common variables
+		const neighbours = getHexagonNeighbourID(unit.position);
+		let isNeighbour = false;
+		let nextHex = null;
 		switch (unit.getName()) {
 			case 'delete':		
-				// target must be neighbour of target piece			
-				var neighbours = getHexagonNeighbourID(unit.position);
-				for (var i = 0; i < neighbours.length; i++) {
+				// target must be neighbour of target piece		
+				for (let i = 0; i < neighbours.length; i++) {
 					if (IDTokey(neighbours[i]) === IDTokey(targetUnit.getPosition())){
 						return true;
 					}
@@ -282,9 +285,9 @@ class GameBoard {
 				break;
 			case 'toss':
 				// target must be neighbour of target piece
-				var neighbours = getHexagonNeighbourID(unit.position);
-				var isNeighbour = false;
-				for (var i = 0; i < neighbours.length; i++) {
+				// var neighbours = getHexagonNeighbourID(unit.position);
+				isNeighbour = false;
+				for (let i = 0; i < neighbours.length; i++) {
 					if (IDTokey(neighbours[i]) === IDTokey(targetUnit.getPosition())){
 						isNeighbour = true;
 					}
@@ -293,7 +296,7 @@ class GameBoard {
 					return false;
 				}
 				// the space behind target must not be an occupied tile
-				var nextHex = this.getNextHexInOppDirection(unit.getPosition(), targetUnit.getPosition());
+				nextHex = this.getNextHexInOppDirection(unit.getPosition(), targetUnit.getPosition());
 				// the action is valid if the space behind target is out of map
 				if (nextHex === null){
 					return true;
@@ -305,9 +308,9 @@ class GameBoard {
 				break;
 			case 'push':
 				// target must be neighbour of target piece
-				var neighbours = getHexagonNeighbourID(unit.position);
-				var isNeighbour = false;
-				for (var i = 0; i < neighbours.length; i++) {
+				// var neighbours = getHexagonNeighbourID(unit.position);
+				isNeighbour = false;
+				for (let i = 0; i < neighbours.length; i++) {
 					if (IDTokey(neighbours[i]) === IDTokey(targetUnit.getPosition())){
 						isNeighbour = true;
 					}
@@ -316,7 +319,7 @@ class GameBoard {
 					return false;
 				}
 				// the space behind target must not be an occupied tile
-				var nextHex = this.getNextHexInDirection(unit.getPosition(), targetUnit.getPosition());
+				nextHex = this.getNextHexInDirection(unit.getPosition(), targetUnit.getPosition());
 				// the action is valid if the space behind target is out of map
 				if (nextHex === null){
 					return true;
@@ -328,7 +331,7 @@ class GameBoard {
 				break;
 			case 'switch':
 				// target must be player's unit
-				var targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
+				// var targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
 				if (targetUnit.getPlayerID() === unit.getPlayerID()) {
 					return true;
 				}
@@ -355,24 +358,27 @@ class GameBoard {
 		let hexagon = null;
 		// set unit as activated
 		stepSequence.push(['activate', unitID]);
+		
+		// toss and push
+		let targetUnit, hexagons, offBoardFlag, targetDefeated;
 		switch (unit.getName()) {
 			case 'delete':
 				stepSequence.push(['defeat', target]);
 				break;
 			case 'push':
-				var targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
+				targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
 				// set unit as activated
-				unit.performAction();
-				var hexagons = this.getAllHexInDirection(unit.getPosition(), target);
+				// unit.performAction();
+				hexagons = this.getAllHexInDirection(unit.getPosition(), target);
 				// Four possibilities for target:				
 				//	[tile, tile, unit, ...]			#1
 				//	[tile, tile, not tile, ...]		#2
 				//	[tile, tile, ..., tile]			#3
 				//	[]								#4
-				var offBoardFlag = true;
-				var targetDefeated = true;
+				offBoardFlag = true;
+				targetDefeated = true;
 				// let hexagon = null;
-				for (var i = 0; i < hexagons.length; i++) {
+				for (let i = 0; i < hexagons.length; i++) {
 					hexagon = this.hexagonList.get(IDTokey(hexagons[i]));
 					// #2
 					if (!hexagon.checkIsTile()) {
@@ -402,18 +408,18 @@ class GameBoard {
 				}
 				break;
 			case 'toss':
-				var targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
+				targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
 				// set unit as activated
-				unit.performAction();
-				var hexagons = this.getAllHexInOppDirection(unit.getPosition(), target);
+				// unit.performAction();
+				hexagons = this.getAllHexInOppDirection(unit.getPosition(), target);
 				// Four possibilities for target:				
 				//	[tile, tile, unit, ...]			#1
 				//	[tile, tile, not tile, ...]		#2
 				//	[tile, tile, ..., tile]			#3
 				//	[]								#4
-				var offBoardFlag = true;
-				var targetDefeated = true;
-				for (var i = 0; i < hexagons.length; i++) {
+				offBoardFlag = true;
+				targetDefeated = true;
+				for (let i = 0; i < hexagons.length; i++) {
 					hexagon = this.hexagonList.get(IDTokey(hexagons[i]));
 					// #2
 					if (!hexagon.checkIsTile()) {
@@ -463,10 +469,10 @@ class GameBoard {
 	// utility functions for unit activation
 	//----------------------------- general functions----------------------------------
 	getNeighbouringEnemies(playerID, position){
-		var neighbours = this.get_hexagon_neighbours(position);
+		const neighbours = this.get_hexagon_neighbours(position);
 		// console.log(neighbours)
-		var enemyPositions = [];
-		for (var i = 0; i < neighbours.length; i++) {
+		let enemyPositions = [];
+		for (let i = 0; i < neighbours.length; i++) {
 			if (neighbours[i].unit != null && neighbours[i].unit.getPlayerID() != playerID){
 				enemyPositions.push(neighbours[i].unit.getPosition());
 				// console.log(enemyPositions)
@@ -475,12 +481,12 @@ class GameBoard {
 		return enemyPositions;
 	}
 	getFriendlyUnits(playerID) {
-		var friendlyList = [];
-		for (var pair of this.hexagonList) {
-			var key = pair[0];
-			var hexagon = pair[1];
+		let friendlyList = [];
+		for (let pair of this.hexagonList) {
+			const key = pair[0];
+			const hexagon = pair[1];
 			if (hexagon.checkIsTile() && (!hexagon.checkIsEmptyTile())){
-				var unit = hexagon.getUnit();
+				const unit = hexagon.getUnit();
 				if (unit.getPlayerID() === playerID){
 					friendlyList.push(unit.getPosition());
 				}
@@ -492,13 +498,13 @@ class GameBoard {
 	//----------------------------PUSH and TOSS------------------------------
 	getNextHexInDirection(origin, next) {
 		//----------to do: validate origin and next are neighbours
-		var colChange = next[0]-origin[0];
-		var rowChange = next[1]-origin[1];
-		var col = next[0];
-		var row = next[1];
+		const colChange = next[0]-origin[0];
+		const rowChange = next[1]-origin[1];
+		let col = next[0];
+		let row = next[1];
 		col = col + colChange;
 		row = row + rowChange;
-		var nextPos = [col, row]
+		const nextPos = [col, row]
 		if (isInBoard(nextPos)){
 			return nextPos;
 		}
@@ -506,16 +512,16 @@ class GameBoard {
 	}
 	getAllHexInDirection(origin, next) {
 		//----------to do: validate origin and next are neighbours
-		var colChange = next[0]-origin[0];
-		var rowChange = next[1]-origin[1];
-		var col = next[0];
-		var row = next[1];
-		var outOfBoard = false;
-		var hexagonList = [];
+		const colChange = next[0]-origin[0];
+		const rowChange = next[1]-origin[1];
+		let col = next[0];
+		let row = next[1];
+		let outOfBoard = false;
+		let hexagonList = [];
 		while (!outOfBoard) {
 			col = col + colChange;
 			row = row + rowChange;
-			var nextPos = [col, row]
+			const nextPos = [col, row]
 			if (isInBoard(nextPos)){
 				hexagonList.push(nextPos);
 			}
@@ -546,10 +552,10 @@ class GameBoard {
 
 	// returns a list of emtpy spaces for building
 	getEmptySpaces() {
-		var emptySpaces = [];
-		for (var pair of this.hexagonList) {
-			var key = pair[0];
-			var hexagon = pair[1];
+		let emptySpaces = [];
+		for (let pair of this.hexagonList) {
+			const key = pair[0];
+			const hexagon = pair[1];
 			if (!hexagon.checkIsTile()) {
 				emptySpaces.push(hexagon.getID());
 			}
@@ -557,7 +563,7 @@ class GameBoard {
 		return emptySpaces;
 	}
 	isValidBuilding(target) {
-		var hexagon = this.hexagonList.get(IDTokey(target));
+		const hexagon = this.hexagonList.get(IDTokey(target));
 		return !hexagon.isTile;
 	}
 	buildTile(target) {
@@ -629,9 +635,9 @@ class Hexagon {
 
 // returns a list of ID of nighbouring hexagons
 function getHexagonNeighbourID(ID){
-	var col = ID[0];
-	var row = ID[1];
-	var neighbours = [];
+	const col = ID[0];
+	const row = ID[1];
+	const neighbours = [];
 	// check up-down
 	if (BOARD_SHAPE[col][0] < row){
 		neighbours.push([col, row-1]);
@@ -662,8 +668,8 @@ function getHexagonNeighbourID(ID){
 
 // check if [i,j] is in game board
 function isInBoard(ID) {
-	var i = ID[0];
-	var j = ID[1];
+	const i = ID[0];
+	const j = ID[1];
 	if (i < 0 || i >= NUM_COLS){
 		return false;
 	}
@@ -676,17 +682,17 @@ function isInBoard(ID) {
 // [i,j] ==> 'i-j'
 function IDTokey(ID) {
 	// console.log(ID);
-	var i = ID[0];
-	var j = ID[1];
-	var key = i.toString()+'-'+j.toString();
+	const i = ID[0];
+	const j = ID[1];
+	const key = i.toString()+'-'+j.toString();
 	return key;
 }
 
 // 'i-j' => [i,j]
 function keyToID(key) {
-	var tokens = key.split('-');
-	var i = parseInt(tokens[0]);
-	var j = parseInt(tokens[1]);
+	const tokens = key.split('-');
+	const i = parseInt(tokens[0]);
+	const j = parseInt(tokens[1]);
 	return [i, j];
 }
 

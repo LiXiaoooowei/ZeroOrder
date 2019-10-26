@@ -80,8 +80,8 @@ class Delete extends Unit {
 
 	
 	delete_any(gameBoard){
-		var hexagonList = gameBoard.get_hexagon_neighbours(this.position);
-		var target = hexagonList[0].getID()
+		const hexagonList = gameBoard.get_hexagon_neighbours(this.position);
+		const target = hexagonList[0].getID()
 		return target;
 
 	}
@@ -99,11 +99,11 @@ class Push extends Unit {
 	}
 
 	getActivations(gameBoard){
-		var neighbouringEnemies = gameBoard.getNeighbouringEnemies(this.playerID, this.position);
-		var validTargets = [];
-		for (var i = 0; i < neighbouringEnemies.length; i++) {
-			var enemyPos = neighbouringEnemies[i];
-			var targetID = gameBoard.getNextHexInDirection(this.position, enemyPos);
+		const neighbouringEnemies = gameBoard.getNeighbouringEnemies(this.playerID, this.position);
+		let validTargets = [];
+		for (let i = 0; i < neighbouringEnemies.length; i++) {
+			const enemyPos = neighbouringEnemies[i];
+			const targetID = gameBoard.getNextHexInDirection(this.position, enemyPos);
 			// the action is valid if the space behind target is out of map
 			if (targetID === null){
 				validTargets.push(enemyPos);
@@ -125,11 +125,11 @@ class Toss extends Unit {
 	}
 
 	getActivations(gameBoard){
-		var neighbouringEnemies = gameBoard.getNeighbouringEnemies(this.playerID, this.position);
-		var validTargets = [];
-		for (var i = 0; i < neighbouringEnemies.length; i++) {
-			var enemyPos = neighbouringEnemies[i];
-			var targetID = gameBoard.getNextHexInOppDirection(this.position, enemyPos);
+		const neighbouringEnemies = gameBoard.getNeighbouringEnemies(this.playerID, this.position);
+		const validTargets = [];
+		for (let i = 0; i < neighbouringEnemies.length; i++) {
+			const enemyPos = neighbouringEnemies[i];
+			const targetID = gameBoard.getNextHexInOppDirection(this.position, enemyPos);
 			// the action is valid if the space behind target is out of map
 			if (targetID === null){
 				validTargets.push(enemyPos);
@@ -151,10 +151,10 @@ class Switch extends Unit {
 	}
 
 	getActivations(gameBoard){
-		var friendlyUnits = gameBoard.getFriendlyUnits(this.playerID);
-		var validTargets = [];
-		for (var i = 0; i < friendlyUnits.length; i++) {
-			var unit = gameBoard.getHexagon(friendlyUnits[i]).getUnit();
+		const friendlyUnits = gameBoard.getFriendlyUnits(this.playerID);
+		let validTargets = [];
+		for (let i = 0; i < friendlyUnits.length; i++) {
+			const unit = gameBoard.getHexagon(friendlyUnits[i]).getUnit();
 			if (!unit.defeated && unit.getName() != 'switch') {
 				validTargets.push(unit.getPosition());
 			}

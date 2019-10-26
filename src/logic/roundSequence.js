@@ -54,13 +54,13 @@ class RoundSequence {
 		if (this.activationPointer === this.activationList.length) {
 			return null;
 		}
-		var activation = this.activationList[this.activationPointer];
+		const activation = this.activationList[this.activationPointer];
 		this.activationPointer += 1;
 		// console.log(this.activationList);
 		return activation;
 	}
 	getNextBuilding() {
-		var building = this.buildingList[this.buildingPointer];
+		const building = this.buildingList[this.buildingPointer];
 		this.buildingPointer += 1;
 		return building;
 	}
@@ -118,8 +118,8 @@ class RoundSequence {
 
 function clone(obj) {
     if (null == obj || "object" != typeof obj) return obj;
-    var copy = new obj.constructor();
-    for (var attr in obj) {
+    const copy = new obj.constructor();
+    for (let attr in obj) {
         if (obj.hasOwnProperty(attr)) copy[attr] = obj[attr];
     }
     // console.log(copy)
