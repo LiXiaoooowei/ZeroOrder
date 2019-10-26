@@ -109,7 +109,7 @@ class Push extends Unit {
 				valid_targets.push(enemy_pos);
 			}
 			// the action is valid if the space behind target is an empty tile
-			if (game_board.getHexagon(target_ID).is_empty_tile) {
+			else if (game_board.getHexagon(target_ID).is_empty_tile) {
 				valid_targets.push(enemy_pos);
 			}
 			// (the action is not valid if the space behind target is an occupied tile)
@@ -135,7 +135,7 @@ class Toss extends Unit {
 				valid_targets.push(enemy_pos);
 			}
 			// the action is valid if the space behind target is an empty tile
-			if (game_board.getHexagon(target_ID).is_empty_tile) {
+			else if (game_board.getHexagon(target_ID).is_empty_tile) {
 				valid_targets.push(enemy_pos);
 			}
 			// (the action is not valid if the space behind target is an occupied tile)

@@ -95,7 +95,7 @@ class Game {
 
 	play() {
 		
-		// TO-DO: separate components of this loop to different functions
+
 		while (!this.end_of_game) {
 			
 			this.move();
@@ -143,7 +143,7 @@ class Game {
 		// console.log(this.game_board.getAllValidMoves(this.current_player.getName()));
 		var is_valid_move = false;
 		while(!is_valid_move){
-			var move = this.current_player.makeMoveRandom(valid_movements);
+			var move = this.current_player.makeMovePlan(valid_movements, board_state);
 			is_valid_move = this.game_board.isValidMove(move, this.current_player.getName());
 		}
 		this.game_board.performMovement(move);
@@ -159,23 +159,23 @@ class Game {
 		//-------------------------------------------------------------------------------
 		var pending_activation = true;
 		while(pending_activation) {
-			var activation = this.current_player.activateAll(valid_activations);
+			var activation = this.current_player.activatePlan(valid_activations);
 			if (activation === null) {
 				pending_activation = false;
 			}				
 			else {
-				var unit = activation[0];
-				if (!unit.can_activate()){
-					continue;
-				}
-				console.log(activation)
+				// var unit = activation[0];
+				// if (!unit.can_activate()){
+				// 	continue;
+				// }
 				// var target = activation[1];
 				if (this.game_board.isValidActivation(activation)){
+					console.log(activation);
 					this.game_board.performAction(activation);
 					valid_activations = this.game_board.getAllValidActivations(this.current_player.getName());
-					if (valid_activations.length == 0){
-						pending_activation = false;
-					}
+					// if (valid_activations.length == 0){
+					// 	pending_activation = false;
+					// }
 				}
 			}
 		}
@@ -188,7 +188,7 @@ class Game {
 			var board_state = this.getBoardState(empty_spaces);
 			// console.log(board_state);
 			//-------------------------------------------------------------------------------
-			var target = this.current_player.placeTileRandom(empty_spaces);
+			var target = this.current_player.buildPlan(empty_spaces);
 			if (this.game_board.isValidBuilding(target)) {
 				this.game_board.buildTile(target);
 				console.log('new tile at ' + target);

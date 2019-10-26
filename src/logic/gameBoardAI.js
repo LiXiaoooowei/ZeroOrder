@@ -10,10 +10,10 @@ var unit = require('./unit');
 
 class GameBoardAI extends gameboard.GameBoard {
 
-	constructor(board_state) {
-		super();
+	constructor(board_state, player_name) {
+		super();		
 		if (board_state != null) {
-			this.setupGameBoard(board_state);
+			this.setupGameBoard(board_state, player_name);
 		}
 		this.turn_status = 'movement';
 	}
@@ -38,19 +38,22 @@ class GameBoardAI extends gameboard.GameBoard {
 	*/
 	// initialise gameboard from boardstate
 	// ASSUMPTION: board_state is at PENDING_MOVE!!!
-	setupGameBoard(board_state) {
+	setupGameBoard(board_state, player_name) {
 		// set white player
 		this.setWhitePlayer(board_state[3]);
 		// determine current player colour
-		const current_player = board_state[4];
+		let current_player = board_state[4];
 		// const current_player_colour = ;
-		if (board_state[4] === current_player){
+		let current_player_colour = '??'
+		if (board_state[3] === current_player){
 			current_player_colour = 'white';
 		}
 		else {
 			current_player_colour = 'black';
 		}
 		// set name for the other player
+		current_player = player_name;
+		// console.log(current_player)
 		const other_player = 'not'+current_player;
 		// set units and tiles
 		let unit_list = [];
@@ -61,37 +64,95 @@ class GameBoardAI extends gameboard.GameBoard {
 				const unit_idx = tile_status[0];
 				const unit_status = tile_status[1];
 				// skip if there is no unit at this position
-				if (unit_idx < 1 || unit_idx > 32) {
+				if (unit_idx === 37) {
 					continue;
 				}
-				let unit = null;
+				// set the position as empty tile
+				else if (unit_idx === 38) {
+					const tile_position = [i, j]
+					const hexagon = this.hexagon_list.get(ID_to_key(tile_position));
+					hexagon.setAsTile();
+					continue;
+				}
+				let new_unit = null;
 				// determine which player the unit is belonged to
 				let unit_owner = current_player;
 				if ((current_player_colour === 'white' && unit_idx < 16) ||
 					(current_player_colour === 'black' && unit_idx >= 16)) {
 					unit_owner = other_player;
 				}
+				// console.log(current_player, unit_owner, current_player_colour, unit_idx, i, j)
 				switch(unit_idx%16) {
 					case 1:
-						unit = new unit.Delete(unit_owner);
+						new_unit = new unit.Delete(unit_owner);
 						break;
 					case 2:
-						unit = new unit.PUSH(unit_owner);
+						new_unit = new unit.Push(unit_owner);
 						break;
 					case 3:
-						unit = new unit.SWITCH(unit_owner);
+						new_unit = new unit.Switch(unit_owner);
 						break;
 					case 4:
-						unit = new unit.TOSS(unit_owner);
+						new_unit = new unit.Toss(unit_owner);
 						break;
 					default:
 						console.log('UNKNOWN UNIT TYPE WHEN CONSTRUCTING AIGAMEBOARD');
 						console.log(tile_status);
 				}
+				const tile_position = [i, j]
+				const hexagon = this.hexagon_list.get(ID_to_key(tile_position));
+				hexagon.setAsTile();
+				new_unit.setPosition(tile_position);
+				hexagon.setUnit(new_unit);
 			}
 		}
 		// set units status
 
+	}
+
+	// restructured the array returned to make DFS easier
+	getAllValidMoves(player_id) {
+		const movements = super.getAllValidMoves(player_id);
+		// console.log(movements);
+		let choices = [];
+		for (let i = 0; i < movements.length; i++) {
+			const starting = movements[i][0];
+			for (let j = 0; j < movements[i][1].length; j++) {
+				const ending = movements[i][1][j];
+				choices.push([starting, ending]);
+			}
+		}
+		return choices;
+	}
+	getAllValidActivations(player_id) {
+		const activations = super.getAllValidActivations(player_id);
+		let choices = [null];	// null -> skip activation
+		for (let i = 0; i < activations.length; i++) {
+			const unit_name = activations[i][0];
+			const unit_position = activations[i][1];
+			for (let j = 0; j < activations[i][2].length; j++) {
+				const target = activations[i][2][j];
+				choices.push([unit_position, target, unit_name]);
+			}
+		}
+		return choices;
+	}
+	getEmptySpaces() {
+		if (this.piece_to_place.length === 0) {
+			return [null];
+		}
+		else {
+			return super.getEmptySpaces();
+		}
+	}
+
+	buildTile(target) {
+		if (target === null) {
+			this.step_log.push(['building', null]);
+		}
+		else {
+			super.buildTile(target);
+		}
 	}
 	//////////////////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////// IRREDUCIBLE STEP ////////////////////////////////////
@@ -108,7 +169,10 @@ class GameBoardAI extends gameboard.GameBoard {
 		unit.setPosition(second_ID);
 	}
 	// target = ID of target tile
-	reverseBuild(target) {	 	
+	reverseBuild(target) {	 
+		if (target === null) {
+			return;
+		}	
 		const hexagon = this.hexagon_list.get(ID_to_key(target));
 		const unit = hexagon.getTileUnit();
 		hexagon.setAsNotTile();
@@ -167,13 +231,13 @@ class GameBoardAI extends gameboard.GameBoard {
 		const step_content = last_step[1];
 		switch (step_type) {
 			case 'movement':
-				reverseMove(step_content);
+				this.reverseMove(step_content);
 				break;
 			case 'activation':
-				reverseStepSequence(step_content);
+				this.reverseStepSequence(step_content);
 				break;
 			case 'building':
-				reverseBuild(step_content);
+				this.reverseBuild(step_content);
 				break;
 			// case 'end-of-turn':
 			// 	break;
@@ -182,5 +246,25 @@ class GameBoardAI extends gameboard.GameBoard {
 		}
 	}
 }
+
+
+
+// [i,j] ==> 'i-j'
+function ID_to_key(ID) {
+	// console.log(ID);
+	var i = ID[0];
+	var j = ID[1];
+	var key = i.toString()+'-'+j.toString();
+	return key;
+}
+
+// 'i-j' => [i,j]
+function key_to_ID(key) {
+	var tokens = key.split('-');
+	var i = parseInt(tokens[0]);
+	var j = parseInt(tokens[1]);
+	return [i, j];
+}
+
 
 module.exports.GameBoardAI = GameBoardAI;

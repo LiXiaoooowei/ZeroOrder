@@ -155,6 +155,7 @@ class GameBoard {
 				movement_list.push([key_to_ID(key), targets]);
 			}
 		}
+		// console.log(movement_list)
 		return movement_list;
 	}
 	isValidMove(move, player_ID) {
@@ -180,7 +181,7 @@ class GameBoard {
 	}
 	performMovement(movement) {
 		this.move(movement);
-		step_log.push(['movement', movement]);
+		this.step_log.push(['movement', movement]);
 	}
 	hasFreeTileToGo(tile_ID, player_ID) {
 		var neighbours = get_hexagon_neighbour_ID(tile_ID);
@@ -233,16 +234,26 @@ class GameBoard {
 		return activation_list;
 	}
 	// validate an action
+	// activation = [unit_position, target_info, 'unit_name']
 	isValidActivation(activation){
+		if (activation === null) {
+			return true;
+		}
+		// console.log(activation)
 		// return true;					//This should always returns true!!!!!!!!!!!
-		var unit = activation[0];
+		const unit_position = activation[0];
+		const initial_hexagon = this.hexagon_list.get(ID_to_key(unit_position));
+		const unit = initial_hexagon.getUnit();
 		var target = activation[1];
 		// the unit must be free to activate and has not yet activated
 		if (!unit.free_to_activate || unit.has_activated) {
 			return false;
 		}
 		var target_unit = this.hexagon_list.get(ID_to_key(target)).getUnit();
-		
+		// the unit must be correct type
+		if (unit.getName() != activation[2]) {
+			return false;
+		}
 		// target must not be already defeated (to be changed later)
 		if (target_unit.defeated) {
 			return false;
@@ -330,7 +341,14 @@ class GameBoard {
 	}
 	// execute an action
 	performAction(activation) {
-		const unit = activation[0];
+		// null activation indicates end of activation phase
+		if (activation === null) {
+			this.step_log.push(['activation', []]);
+			return;
+		}
+		const unit_position = activation[0];
+		const initial_hexagon = this.hexagon_list.get(ID_to_key(unit_position));
+		const unit = initial_hexagon.getUnit();
 		const unit_ID = unit.getPosition();
 		const target = activation[1];
 		let step_sequence = [];
@@ -544,7 +562,7 @@ class GameBoard {
 	}
 	buildTile(target) {
 		this.build(target);
-		step_log.push(['building', target])
+		this.step_log.push(['building', target])
 	}
 }
 
