@@ -104,15 +104,12 @@ class AI extends Player {
 		}
 		// console.log(roundStatus);
 		// termination
-		// terminate when game status is in building and there is nothing to build
 		if (roundStatus === 'end_of_turn') {
 			// evaluate score for current gameboard, update if score is higher
 			const newScore = Math.random();
 			// console.log('new score: ' + newScore + ' best score: ' + currentScore);
 			// console.log(this.roundSequence);
 			if (newScore > currentScore) {
-				// this.roundSequence = clone(roundSequence);
-				// this.roundSequence = JSON.parse(JSON.stringify(roundSequence));
 				this.roundSequence = roundSequence.copy();
 				// console.log('inside');
 				// console.log(this.roundSequence);
@@ -173,19 +170,13 @@ class AI extends Player {
 				}
 				// backtrack for next iteration
 				gameBoard.backtrack();
-				// console.log('before')
-				// console.log(roundSequence)
 				roundSequence.removeLastStep();
-				// console.log('after')
-				// console.log(roundSequence)
 			} // end of choices for-loop			
 		}// end of propagation
 		return currentScore;
 	}
 
 	activatePlan(validActivations) {
-		// console.log(validActivations);
-		// console.log(this.roundSequence.activation_list)
 		return this.roundSequence.getNextActivation();
 	}
 
@@ -209,16 +200,7 @@ class AI extends Player {
 		if (validActivations.length == 0){
 			return null;
 		}
-		// for (var i = 0; i < this.unitList; i++) {
-		// 	unit = this.unitList[i]
-		// 	if (unit.can_activate(gameBoard)){
-		// 		var target_list = unit.getActivations(gameBoard);
-		// 		if (target_list.length > 0){
-		// 			activation_list.push([unit, target_list[0]]);
-		// 		}
-		// 	}
 				
-		// }
 		const rand1 = Math.floor(Math.random()*validActivations.length);
 		// var unit = this.getUnitWithName(validActivations[rand1][0]);
 		const unit = validActivations[rand1][1];

@@ -1,14 +1,14 @@
 'use strict';
 
-/* 	boardState is an array with the following:
-*	boardState[0]: number of columns of game board
-*	boardState[1]: a 2D array specifying valid locations on each column
-* 	boardState[2]: a matrix representation of game board. Each loaction is represented as [UNIT, ABLE_TO_MOVE]
-*	boardState[3]: name of white player
-*	boardState[4]: name of current player
-* 	boardState[5]: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
+/* 	boardState is an dictionary with the following properties:
+*	boardState.numCol: number of columns of game board
+*	boardState.boardShape: a 2D array specifying valid locations on each column
+* 	boardState.boardMatrix: a matrix representation of game board. Each loaction is represented as [UNIT, ABLE_TO_MOVE]
+*	boardState.whitePlayer: name of white player
+*	boardState.currentPlayer: name of current player
+* 	boardState.state: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
 *					or BLACK_WIN
-*	boardState[6]: if the game is pending movement, it contents a list of valid movements,
+*	boardState.content: if the game is pending movement, it contents a list of valid movements,
 *					each movement is represented as [starting location, [list of valid ending locations]]
 *					if the game is pending activation, it contents a list of valid activations, 
 *					each activation is represented as [name of unit, location, [list of valid targets]]
@@ -28,8 +28,6 @@ WHITE_TOSS = 22,
 EMPTY_SPACE = 37,
 EMPTY_TILE = 38;
 
-
-
 const UNIT = 0,
 ABLE_TO_MOVE = 1;
 
@@ -42,23 +40,24 @@ BLACK_WIN = 4;
 
 class BoardState {
 	constructor(numCol, boardShape, whitePlayer, currentPlayer) {
-		this.numCol = numCol;
-		this.boardShape = boardShape;
-		this.whitePlayer = whitePlayer;
-		this.currentPlayer = currentPlayer;
-		this.baordMatrix = [];
+		this.boardState = {};
+		this.boardState.numCol = numCol;
+		this.boardState.boardShape = boardShape;
+		this.boardState.whitePlayer = whitePlayer;
+		this.boardState.currentPlayer = currentPlayer;
+		this.boardState.boardMatrix = [];
 		for (let i = 0; i < numCol; i++) {
-			this.baordMatrix.push([]);
+			this.boardState.boardMatrix.push([]);
 			for (let j = 0; j <= boardShape[i][1]; j++) {
-				this.baordMatrix[i].push(null);
+				this.boardState.boardMatrix[i].push(null);
 				if (j >= boardShape[i][0]) {
-					this.baordMatrix[i][j] = [EMPTY_TILE,false]
+					this.boardState.boardMatrix[i][j] = [EMPTY_TILE,false]
 				}
 			}
 		}
 	}
 	getBoardState() {
-		return [this.numCol, this.boardShape, this.baordMatrix, this.whitePlayer, this.currentPlayer, this.state, this.content];
+		return this.boardState;
 	}
 	setHexagon(ID, hexagon) {
 		const col = ID[0];
@@ -66,28 +65,28 @@ class BoardState {
 		////////////// handle temp tile, to be changed later
 		if (col < 50) {
 			const array = this.hexagonToArray(hexagon);
-			this.baordMatrix[col][row] = array;
+			this.boardState.boardMatrix[col][row] = array;
 		}
 		
 	}
 	setStatus(state, content) {
 		if (state === 'waiting_movement') {
-			this.state = PENDING_MOVE;
+			this.boardState.state = PENDING_MOVE;
 		}
 		else if (state === 'waiting_activation') {
-			this.state = PENDING_ACTION;
+			this.boardState.state = PENDING_ACTION;
 		}
 		else if (state === 'waiting_tile') {
-			this.state = WAITING_NEW_TILE
+			this.boardState.state = WAITING_NEW_TILE
 		}
 		else if (state === 'white_win') {
-			this.state = WHITE_WIN;
+			this.boardState.state = WHITE_WIN;
 		}
 		else {
-			this.state = BLACK_WIN;
+			this.boardState.state = BLACK_WIN;
 		}
 		
-		this.content = content;
+		this.boardState.content = content;
 	}
 	
 	hexagonToArray(hexagon) {
@@ -102,9 +101,9 @@ class BoardState {
 		}
 		// the tile is occupied by a unit
 		let colour, offset;
-		if (hexagon.getUnit().getPlayerID() == this.whitePlayer) {
+		if (hexagon.getUnit().getPlayerID() == this.boardState.whitePlayer) {
 			// colour = white;
-			offset = 16;
+			offset = 18;
 		}
 		else {
 			// colour = black;

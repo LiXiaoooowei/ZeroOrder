@@ -1,31 +1,23 @@
 'use strict';
 
-/*	NOTE: There is an important difference between current version of game and actual game!!!!!
-	Currently each player only has 'delete', hence the part for which player place defeated piece
-	as tile is not implemented. This will be added once some other pieces are added.
-	Main while loop needs to be modified for this change.
-*/
-
-
-
 const GameBoard = require('./gameBoard');
-const unit = require('./unit');
+const UnitList = require('./units/unitList');
 const player = require('./player');
 
+/***************************test variables***********************************/
+const playerList = [new player.AI('Alice'), new player.AI('Bob')];
 
- const tilePosition = [[1,3],[1,4],[1,5],[1,6],[1,7],[2,3],[2,4],[2,5],[2,6],[2,7],[3,2],[3,3],[3,5],[3,6],[3,7]];
- const initialPieces = [[['delete', [2,3]], ['toss', [2,4]], ['push',[1,3]]], [['delete', [2,7]],['switch',[3,6]],['push',[3,5]]]];
+const tilePosition = [[1,3],[1,4],[1,5],[1,6],[1,7],[2,3],[2,4],[2,5],[2,6],[2,7],[3,2],[3,3],[3,5],[3,6],[3,7]];
+const initialPieces = [[['delete', [2,3]], ['toss', [2,4]], ['push',[1,3]]], [['delete', [2,7]],['switch',[3,6]],['push',[3,5]]]];
 
 
 // set default units for testing
 // var tilePosition = [[2,3],[2,4],[2,5],[2,6],[2,7]];
-
-
 // Alice win
 // var initialPieces = [[['delete', [2,3]]], [['delete', [2,7]]]];
-
 // Bob win
 // var initialPieces = [[['delete', [2,3]]], [['delete', [2,6]]]];
+/****************************************************************************/
 
 class Game {
 	constructor(playerList) { 
@@ -45,7 +37,6 @@ class Game {
 	}
 
 	setTilesFromList(tileList) {
-
 		const numTile = tileList.length;
 		for (let i = 0; i < numTile; i++){
 			// console.log(tileList[i])
@@ -65,22 +56,9 @@ class Game {
 				if (!hexagon.isTile) {
 					continue;
 				}
-				switch (unitList[i][j][0]) {
-					case 'delete':
-						newUnit = new unit.Delete(this.players[i].getName());
-						break;
-					case 'push':
-						newUnit = new unit.Push(this.players[i].getName());
-						break;
-					case 'toss':
-						newUnit = new unit.Toss(this.players[i].getName());
-						break;
-					case 'switch':
-						newUnit = new unit.Switch(this.players[i].getName());
-						break;
-					default:
-						console.log('unknown unit in unit list' + unitList[i][j][0]);
-				}
+
+				// create a new unit
+				newUnit = new UnitList.unitList[unitList[i][j][0]](this.players[i].getName());
 				
 				// check if the player already has the unit				
 				const flag = this.players[i].addUnit(newUnit);
@@ -94,6 +72,7 @@ class Game {
 		}
 	}
 
+	// main game loop
 	play() {		
 		while (!this.endOfGame) {
 			
@@ -193,6 +172,7 @@ class Game {
 			}			
 		}
 	}
+	// clean up game status for next turn
 	endOfTurn() {
 		// reset activation
 		this.currentPlayer.resetUnitActivation();
@@ -204,6 +184,7 @@ class Game {
 			this.currentPlayer = this.players[0];
 		}
 	}
+	// this is intended to be passed to front end
 	getBoardState(content) {
 		const boardState = this.gameBoard.generateBoardState(this.currentPlayer.getName());
 		boardState.setStatus(this.status, content);
@@ -211,11 +192,15 @@ class Game {
 	}
 }
 
-const playerList = [new player.AI('Alice'), new player.AI('Bob')];
-const myGame = new Game(playerList);
+function playGame(playerList, tilePosition, initialPieces) {
+	const myGame = new Game(playerList);
+	myGame.setTilesFromList(tilePosition);
+	myGame.setPlayerUnitsFromList(initialPieces);
+	myGame.play();
+	console.log(myGame.winner.getName() + ' won!');
+}
 
+playGame(playerList, tilePosition, initialPieces);
 
-myGame.setTilesFromList(tilePosition);
-myGame.setPlayerUnitsFromList(initialPieces);
-myGame.play();
-console.log(myGame.winner.getName() + ' won!');
+module.exports.Game = Game;
+module.exports.playGame = playGame;

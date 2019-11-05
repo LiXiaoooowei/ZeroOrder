@@ -1,7 +1,7 @@
 'use strict';
 
 const Gameboard = require('./gameBoard');
-const unit = require('./unit');
+const UnitList = require('./units/unitList');
 
 /*	This class is used by AI player to simulate game board for planning purpose
 	The key difference is that this class allows the player to backtrack steps 
@@ -21,15 +21,16 @@ class GameBoardAI extends Gameboard.GameBoard {
 	//////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////// BOARDSTATE ////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////
-	/* 	boardState is an array with the following:
-	*	boardState[0]: number of columns of game board
-	*	boardState[1]: a 2D array specifying valid locations on each column
-	* 	boardState[2]: a matrix representation of game board. Each loaction is represented as [UNIT, ABLE_TO_MOVE]
-	*	boardState[3]: name of white player
-	*	boardState[4]: name of current player
-	* 	boardState[5]: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
+	/* 	boardState is an dictionary with the following properties:
+	*	boardState.numCol: number of columns of game board
+	*	boardState.boardShape: a 2D array specifying valid locations on each column
+	* 	boardState.boardMatrix: a matrix representation of game board. Each loaction is represented as 
+	*	[UNIT, ABLE_TO_MOVE]
+	*	boardState.whitePlayer: name of white player
+	*	boardState.currentPlayer: name of current player
+	* 	boardState.state: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
 	*					or BLACK_WIN
-	*	boardState[6]: if the game is pending movement, it contents a list of valid movements,
+	*	boardState.content: if the game is pending movement, it contents a list of valid movements,
 	*					each movement is represented as [starting location, [list of valid ending locations]]
 	*					if the game is pending activation, it contents a list of valid activations, 
 	*					each activation is represented as [name of unit, location, [list of valid targets]]
@@ -40,12 +41,12 @@ class GameBoardAI extends Gameboard.GameBoard {
 	// ASSUMPTION: boardState is at PENDING_MOVE!!!
 	setupGameBoard(boardState, playerName) {
 		// set white player
-		this.setWhitePlayer(boardState[3]);
+		this.setWhitePlayer(boardState.whitePlayer);
 		// determine current player colour
-		let currentPlayer = boardState[4];
+		let currentPlayer = boardState.currentPlayer;
 		// const currentPlayerColour = ;
 		let currentPlayerColour = '??'
-		if (boardState[3] === currentPlayer){
+		if (boardState.whitePlayer === currentPlayer){
 			currentPlayerColour = 'white';
 		}
 		else {
@@ -57,10 +58,10 @@ class GameBoardAI extends Gameboard.GameBoard {
 		const otherPlayer = 'not'+currentPlayer;
 		// set units and tiles
 		let unitList = [];
-		const numCol = boardState[0];
+		const numCol = boardState.numCol;
 		for (let i = 0; i < numCol; i++) {
-			for (let j = boardState[1][i][0]; j <= boardState[1][i][1]; j++) {
-				const tileStatus = boardState[2][i][j];
+			for (let j = boardState.boardShape[i][0]; j <= boardState.boardShape[i][1]; j++) {
+				const tileStatus = boardState.boardMatrix[i][j];
 				const unitIdx = tileStatus[0];
 				const unitStatus = tileStatus[1];
 				// skip if there is no unit at this position
@@ -69,7 +70,7 @@ class GameBoardAI extends Gameboard.GameBoard {
 				}
 				// set the position as empty tile
 				else if (unitIdx === 38) {
-					const tilePosition = [i, j]
+					const tilePosition = [i, j];
 					const hexagon = this.hexagonList.get(IDToKey(tilePosition));
 					hexagon.setAsTile();
 					continue;
@@ -77,28 +78,18 @@ class GameBoardAI extends Gameboard.GameBoard {
 				let newUnit = null;
 				// determine which player the unit is belonged to
 				let unitOwner = currentPlayer;
-				if ((currentPlayerColour === 'white' && unitIdx < 16) ||
-					(currentPlayerColour === 'black' && unitIdx >= 16)) {
+				if ((currentPlayerColour === 'white' && unitIdx < 18) ||
+					(currentPlayerColour === 'black' && unitIdx >= 18)) {
 					unitOwner = otherPlayer;
 				}
 				// console.log(currentPlayer, unitOwner, currentPlayerColour, unitIdx, i, j)
-				switch(unitIdx%16) {
-					case 1:
-						newUnit = new unit.Delete(unitOwner);
-						break;
-					case 2:
-						newUnit = new unit.Push(unitOwner);
-						break;
-					case 3:
-						newUnit = new unit.Switch(unitOwner);
-						break;
-					case 4:
-						newUnit = new unit.Toss(unitOwner);
-						break;
-					default:
-						console.log('UNKNOWN UNIT TYPE WHEN CONSTRUCTING AIGAMEBOARD');
-						console.log(tileStatus);
+				let listIdx = unitIdx;
+				if (unitIdx > 18) {
+					listIdx -= 18;
 				}
+				listIdx -= 1;
+				newUnit = new UnitList.unitList[UnitList.unitNameArray[listIdx]](unitOwner);
+
 				const tilePosition = [i, j]
 				const hexagon = this.hexagonList.get(IDToKey(tilePosition));
 				hexagon.setAsTile();
@@ -246,8 +237,6 @@ class GameBoardAI extends Gameboard.GameBoard {
 		}
 	}
 }
-
-
 
 // [i,j] ==> 'i-j'
 function IDToKey(ID) {

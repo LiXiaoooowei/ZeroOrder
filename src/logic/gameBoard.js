@@ -23,6 +23,7 @@ class GameBoard {
 		// list of units to be built
 		this.pieceToPlace = [];
 		// place holder for intermeidate steps such as switch
+		this.tempTileID = tempTileID;
 		this.tempTile = new Hexagon(tempTileID);
 		this.tempTile.setAsTile();
 		this.hexagonList.set(IDTokey(tempTileID), this.tempTile);
@@ -38,7 +39,12 @@ class GameBoard {
 		return this.hexagonList.get(IDTokey(ID));
 	}
 
-	get_hexagon_neighbours(ID) {
+	getHexagonNeighbourID(ID) {
+		const IDList = this.hexagonList.get(IDTokey(ID)).getNeighbourHexagonID();
+		return IDList;
+	}
+
+	getHexagonNeighbours(ID) {
 		// var IDList = getHexagonNeighbourID(ID);		
 		const IDList = this.hexagonList.get(IDTokey(ID)).getNeighbourHexagonID();
 		const neighbours = [];
@@ -65,7 +71,30 @@ class GameBoard {
 	 * These steps are easily reversible, hence it makes backtracking easy.
 	 * They should be treated as private functions.
 	 */
-
+	performStepSequence(stepSequence) {
+		for (let idx in stepSequence) {
+			const step = stepSequence[idx];
+			const stepType = step[0];
+			const stepContent = step[1];
+			switch(stepType) {
+				case 'move':
+					this.move(stepContent);
+					break;
+				case 'build':
+					this.build(stepContent);
+					break;
+				case 'defeat':
+					this.defeat(stepContent);
+					break;
+				case 'activate':
+					this.activate(stepContent);
+					break;
+				default:
+					console.log('UNKNOWN stepType IN stepSequence');
+					console.log(step);
+			}
+		}
+	}
 	// movement = [ID of starting tile, ID of ending tile]
 	move(movement) {
 		const firstID = movement[0];
@@ -101,31 +130,7 @@ class GameBoard {
 	 	const targetUnit = hexagon.getUnit();
 	 	targetUnit.performAction();
 	}
-
-	performStepSequence(stepSequence) {
-		for (let idx in stepSequence) {
-			const step = stepSequence[idx];
-			const stepType = step[0];
-			const stepContent = step[1];
-			switch(stepType) {
-				case 'move':
-					this.move(stepContent);
-					break;
-				case 'build':
-					this.build(stepContent);
-					break;
-				case 'defeat':
-					this.defeat(stepContent);
-					break;
-				case 'activate':
-					this.activate(stepContent);
-					break;
-				default:
-					console.log('UNKNOWN stepType IN stepSequence');
-					console.log(step);
-			}
-		}
-	}
+	
 	//////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////// MOVEMENT //////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////
@@ -235,113 +240,32 @@ class GameBoard {
 	}
 	// validate an action
 	// activation = [unitPosition, target_info, 'unit_name']
+	//This should always returns true!!!!!!!!!!!
 	isValidActivation(activation){
 		if (activation === null) {
 			return true;
 		}
-		// console.log(activation)
-		// return true;					//This should always returns true!!!!!!!!!!!
+		// console.log(activation)			
 		const unitPosition = activation[0];
 		const initialHexagon = this.hexagonList.get(IDTokey(unitPosition));
 		const unit = initialHexagon.getUnit();
-		const target = activation[1];
 		// the unit must be free to activate and has not yet activated
 		if (!unit.freeToActivate || unit.hasActivated) {
+			console.log('invalid activation: the unit cannot be activated!!');
+			console.log(activation);
 			return false;
 		}
-		const targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
 		// the unit must be correct type
 		if (unit.getName() != activation[2]) {
+			console.log('invalid activation: wrong activation syntax!!');
+			console.log(activation);
+			console.log(unit);
 			return false;
 		}
-		// target must not be already defeated (to be changed later)
-		if (targetUnit.defeated) {
-			return false;
-		}	
-		// target must belong to correct player
-		switch (unit.getName()) {
-			case 'switch':
-				if (targetUnit.getPlayerID() != unit.getPlayerID()){
-					return false;
-				}
-				break;
-			default:
-				if (targetUnit.getPlayerID() === unit.getPlayerID()){
-					return false;
-				}
-		}	
-		// some common variables
-		const neighbours = getHexagonNeighbourID(unit.position);
-		let isNeighbour = false;
-		let nextHex = null;
-		switch (unit.getName()) {
-			case 'delete':		
-				// target must be neighbour of target piece		
-				for (let i = 0; i < neighbours.length; i++) {
-					if (IDTokey(neighbours[i]) === IDTokey(targetUnit.getPosition())){
-						return true;
-					}
-				}
-				break;
-			case 'toss':
-				// target must be neighbour of target piece
-				// var neighbours = getHexagonNeighbourID(unit.position);
-				isNeighbour = false;
-				for (let i = 0; i < neighbours.length; i++) {
-					if (IDTokey(neighbours[i]) === IDTokey(targetUnit.getPosition())){
-						isNeighbour = true;
-					}
-				}
-				if (!isNeighbour) {
-					return false;
-				}
-				// the space behind target must not be an occupied tile
-				nextHex = this.getNextHexInOppDirection(unit.getPosition(), targetUnit.getPosition());
-				// the action is valid if the space behind target is out of map
-				if (nextHex === null){
-					return true;
-				}
-				// the action is valid if the space behind target is an empty tile
-				if (this.getHexagon(nextHex).isEmptyTile) {
-					return true;
-				}
-				break;
-			case 'push':
-				// target must be neighbour of target piece
-				// var neighbours = getHexagonNeighbourID(unit.position);
-				isNeighbour = false;
-				for (let i = 0; i < neighbours.length; i++) {
-					if (IDTokey(neighbours[i]) === IDTokey(targetUnit.getPosition())){
-						isNeighbour = true;
-					}
-				}
-				if (!isNeighbour) {
-					return false;
-				}
-				// the space behind target must not be an occupied tile
-				nextHex = this.getNextHexInDirection(unit.getPosition(), targetUnit.getPosition());
-				// the action is valid if the space behind target is out of map
-				if (nextHex === null){
-					return true;
-				}
-				// the action is valid if the space behind target is an empty tile
-				if (this.getHexagon(nextHex).isEmptyTile) {
-					return true;
-				}
-				break;
-			case 'switch':
-				// target must be player's unit
-				// var targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
-				if (targetUnit.getPlayerID() === unit.getPlayerID()) {
-					return true;
-				}
-				break;
-			default:
-				return false;
-		}
-
-		return false;
+		// check unit-specific requirements
+		return unit.isValidActivation(this, activation);
 	}
+	
 	// execute an action
 	performAction(activation) {
 		// null activation indicates end of activation phase
@@ -349,118 +273,12 @@ class GameBoard {
 			this.stepLog.push(['activation', []]);
 			return;
 		}
+		// get stepSequence from the unit
 		const unitPosition = activation[0];
 		const initialHexagon = this.hexagonList.get(IDTokey(unitPosition));
 		const unit = initialHexagon.getUnit();
-		const unitID = unit.getPosition();
-		const target = activation[1];
-		let stepSequence = [];
-		let hexagon = null;
-		// set unit as activated
-		stepSequence.push(['activate', unitID]);
-		
-		// toss and push
-		let targetUnit, hexagons, offBoardFlag, targetDefeated;
-		switch (unit.getName()) {
-			case 'delete':
-				stepSequence.push(['defeat', target]);
-				break;
-			case 'push':
-				targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
-				// set unit as activated
-				// unit.performAction();
-				hexagons = this.getAllHexInDirection(unit.getPosition(), target);
-				// Four possibilities for target:				
-				//	[tile, tile, unit, ...]			#1
-				//	[tile, tile, not tile, ...]		#2
-				//	[tile, tile, ..., tile]			#3
-				//	[]								#4
-				offBoardFlag = true;
-				targetDefeated = true;
-				// let hexagon = null;
-				for (let i = 0; i < hexagons.length; i++) {
-					hexagon = this.hexagonList.get(IDTokey(hexagons[i]));
-					// #2
-					if (!hexagon.checkIsTile()) {
-						offBoardFlag = false;
-						break;
-					}
-					// #1
-					if (!hexagon.checkIsEmptyTile()) {
-						hexagon = this.hexagonList.get(IDTokey(hexagons[i-1]));
-						offBoardFlag = false;
-						targetDefeated = false;
-						break;
-					}
-				}
-				// if target sruvives (#1)
-				if (!targetDefeated) {
-					stepSequence.push(['move', [target, hexagon.getID()]]);
-				}
-				// if target is defeated but not off map (#2)
-				else if(!offBoardFlag){
-					stepSequence.push(['defeat', target]);
-					stepSequence.push(['build', hexagon.getID()]);
-				}
-				// target is defeated and off map (#3 and #4)
-				else {
-					stepSequence.push(['defeat', target]);
-				}
-				break;
-			case 'toss':
-				targetUnit = this.hexagonList.get(IDTokey(target)).getUnit();
-				// set unit as activated
-				// unit.performAction();
-				hexagons = this.getAllHexInOppDirection(unit.getPosition(), target);
-				// Four possibilities for target:				
-				//	[tile, tile, unit, ...]			#1
-				//	[tile, tile, not tile, ...]		#2
-				//	[tile, tile, ..., tile]			#3
-				//	[]								#4
-				offBoardFlag = true;
-				targetDefeated = true;
-				for (let i = 0; i < hexagons.length; i++) {
-					hexagon = this.hexagonList.get(IDTokey(hexagons[i]));
-					// #2
-					if (!hexagon.checkIsTile()) {
-						offBoardFlag = false;
-						break;
-					}
-					// #1
-					if (!hexagon.checkIsEmptyTile()) {
-						hexagon = this.hexagonList.get(IDTokey(hexagons[i-1]));
-						offBoardFlag = false;
-						targetDefeated = false;
-						break;
-					}
-				}
-				// if target survives (#1)
-				if (!targetDefeated) {
-					stepSequence.push(['move', [target, hexagon.getID()]]);
-				}
-				// if target is defeated but not off map (#2)
-				else if(!offBoardFlag){
-					stepSequence.push(['defeat', target]);
-					stepSequence.push(['build', hexagon.getID()]);
-				}
-				// target is defeated and off map (#3 and #4)
-				else {
-					stepSequence.push(['defeat', target]);
-				}
-				break;
-			case 'switch':
-				// exchange position between 'switch' and target
-				const firstPosition = unitID;
-				const secondPosition = target;
-				stepSequence.push(['move',[firstPosition, tempTileID]]);
-				stepSequence.push(['move',[secondPosition, firstPosition]]);
-				stepSequence.push(['move',[tempTileID, secondPosition]]);
-				break;
-			case 'freeze':
-				break;
-			default:
-				console.log('unknown unit activation' + activation);
-		}
+		const stepSequence = unit.activate(this, activation);
+		// perform the steps and log
 		// console.log(stepSequence)
 		this.performStepSequence(stepSequence);
 		this.stepLog.push(['activation', stepSequence]);
@@ -469,7 +287,7 @@ class GameBoard {
 	// utility functions for unit activation
 	//----------------------------- general functions----------------------------------
 	getNeighbouringEnemies(playerID, position){
-		const neighbours = this.get_hexagon_neighbours(position);
+		const neighbours = this.getHexagonNeighbours(position);
 		// console.log(neighbours)
 		let enemyPositions = [];
 		for (let i = 0; i < neighbours.length; i++) {
@@ -666,7 +484,7 @@ function getHexagonNeighbourID(ID){
 	return neighbours;
 }
 
-// check if [i,j] is in game board
+// check if [i,j] is in game board, the temp tile is not on game board
 function isInBoard(ID) {
 	const i = ID[0];
 	const j = ID[1];
