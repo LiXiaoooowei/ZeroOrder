@@ -77,6 +77,9 @@ class Push extends unit.Unit {
 		stepSequence.push(['activate', this.position]);
 
 		const target = activation[1];
+		const targetUnit = gameBoard.getHexagon(target).getUnit();
+		const updateSequence = targetUnit.updateInfluence(gameBoard);
+		stepSequence = stepSequence.concat(updateSequence);
 		const hexagons = gameBoard.getAllHexInDirection(this.getPosition(), target);
 		// Four possibilities for target:				
 		//	[tile, tile, unit, ...]			#1

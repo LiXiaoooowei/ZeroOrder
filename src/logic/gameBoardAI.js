@@ -25,7 +25,7 @@ class GameBoardAI extends Gameboard.GameBoard {
 	*	boardState.numCol: number of columns of game board
 	*	boardState.boardShape: a 2D array specifying valid locations on each column
 	* 	boardState.boardMatrix: a matrix representation of game board. Each loaction is represented as 
-	*	[UNIT, ABLE_TO_MOVE]
+	*	[UNIT, MOBILITY]
 	*	boardState.whitePlayer: name of white player
 	*	boardState.currentPlayer: name of current player
 	* 	boardState.state: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
@@ -94,6 +94,7 @@ class GameBoardAI extends Gameboard.GameBoard {
 				const hexagon = this.hexagonList.get(IDToKey(tilePosition));
 				hexagon.setAsTile();
 				newUnit.setPosition(tilePosition);
+				newUnit.setImmobileStatus(unitStatus);
 				hexagon.setUnit(newUnit);
 			}
 		}
@@ -115,18 +116,32 @@ class GameBoardAI extends Gameboard.GameBoard {
 		}
 		return choices;
 	}
+
 	getAllValidActivations(player_id) {
 		const activations = super.getAllValidActivations(player_id);
 		let choices = [null];	// null -> skip activation
 		for (let i = 0; i < activations.length; i++) {
 			const unitName = activations[i][0];
 			const unitPosition = activations[i][1];
+			const unitActivationDimension = this.getUnitActivationDimension(unitName);
+			// TO-DO: make this into recursion
+
 			for (let j = 0; j < activations[i][2].length; j++) {
 				const target = activations[i][2][j];
 				choices.push([unitPosition, target, unitName]);
 			}
 		}
 		return choices;
+	}
+	getUnitActivationDimension(unitName) {
+		// TO-DO: make action dimension as an attribute for unit class
+		switch(unitName){
+			case 'twist':
+				return 2;
+			
+			default:
+				return 1;
+		}
 	}
 	getEmptySpaces() {
 		if (this.pieceToPlace.length === 0) {
@@ -139,7 +154,7 @@ class GameBoardAI extends Gameboard.GameBoard {
 
 	buildTile(target) {
 		if (target === null) {
-			this.stepLog.push(['building', null]);
+			this.stepLog.push(['building', []]);
 		}
 		else {
 			super.buildTile(target);
@@ -188,6 +203,25 @@ class GameBoardAI extends Gameboard.GameBoard {
 	 	targetUnit.resetActivation();
 	}
 
+	reverseMobility(step)  {
+		const targetID = step[1];
+		const objectiveStatus = step[3];
+		const hexagon = this.hexagonList.get(IDToKey(targetID));
+	 	const targetUnit = hexagon.getUnit();
+	 	targetUnit.setImmobileStatus(objectiveStatus);
+		// switch(objectiveStatus){
+		// 	case null:
+		// 		targetUnit.freeToActivate = true;
+		// 		break;
+		// 	case 'freeze':
+		// 		targetUnit.freeToActivate = false;
+		// 		break;
+		// 	default:
+		// 		console.log('invalid change in mobility statue: unknown status!!!');
+		// 		console.log(step);
+		// }
+	}
+
 	// reverse steps performed in one activation
 	reverseStepSequence(stepSequence) {
 		stepSequence.reverse();
@@ -208,6 +242,9 @@ class GameBoardAI extends Gameboard.GameBoard {
 				case 'activate':
 					this.reverseActivate(stepContent);
 					break;
+				case 'mobility':
+					this.reverseMobility(step);
+					break;
 				default:
 					console.log('UNKNOWN stepType IN stepSequence');
 					console.log(step);
@@ -220,21 +257,21 @@ class GameBoardAI extends Gameboard.GameBoard {
 		const lastStep = this.stepLog.pop();
 		const stepType = lastStep[0];
 		const stepContent = lastStep[1];
-		switch (stepType) {
-			case 'movement':
-				this.reverseMove(stepContent);
-				break;
-			case 'activation':
-				this.reverseStepSequence(stepContent);
-				break;
-			case 'building':
-				this.reverseBuild(stepContent);
-				break;
-			// case 'end-of-turn':
-			// 	break;
-			default:
-				console.log('unregonised step type in backtracking' + status);
-		}
+		// console.log(lastStep)
+		this.reverseStepSequence(stepContent);
+		// switch (stepType) {
+		// 	case 'movement':
+		// 		this.reverseMove(stepContent);
+		// 		break;
+		// 	case 'activation':
+		// 		this.reverseStepSequence(stepContent);
+		// 		break;
+		// 	case 'building':
+		// 		this.reverseBuild(stepContent);
+		// 		break;
+		// 	default:
+		// 		console.log('unregonised step type in backtracking' + stepType);
+		// }
 	}
 }
 

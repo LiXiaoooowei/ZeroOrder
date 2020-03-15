@@ -7,9 +7,14 @@ const player = require('./player');
 /***************************test variables***********************************/
 const playerList = [new player.AI('Alice'), new player.AI('Bob')];
 
-const tilePosition = [[1,3],[1,4],[1,5],[1,6],[1,7],[2,3],[2,4],[2,5],[2,6],[2,7],[3,2],[3,3],[3,5],[3,6],[3,7]];
-const initialPieces = [[['delete', [2,3]], ['toss', [2,4]], ['push',[1,3]]], [['delete', [2,7]],['switch',[3,6]],['push',[3,5]]]];
-
+const tilePosition = [[1,3],[1,4],[1,6],[1,7],[2,3],[2,4],[2,5],[2,6],[2,7],[3,3],[3,5],[3,6]];
+const initialPieces = [[['delete', [2,3]], ['toss', [2,4]], ['push',[1,3]]], [['delete', [2,7]],['switch',[3,6]],['push',[3,5]],['freeze',[1,6]]]];
+// test freeze
+// const tilePosition = [[1,2],[1,3],[1,4],[1,5],[1,6],[1,7]];
+// const initialPieces = [[['freeze', [1,2]]], [['delete', [1,4]],['push',[1,5]]]];
+// test freeze 2
+// const tilePosition = [[1,2],[1,3],[1,4],[1,5],[1,6],[3,3],[3,4]];
+// const initialPieces = [[['switch', [1,2]],['freeze', [3,3]]], [['delete', [1,5]],['push',[1,4]]]];
 
 // set default units for testing
 // var tilePosition = [[2,3],[2,4],[2,5],[2,6],[2,7]];
@@ -86,6 +91,7 @@ class Game {
 			this.build();
 
 			this.endOfTurn();
+			console.log('========== next player =============');
 
 		}
 		//-------------------------------------------------------------------------------

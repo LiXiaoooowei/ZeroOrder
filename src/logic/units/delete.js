@@ -47,6 +47,9 @@ class Delete extends unit.Unit {
 		stepSequence.push(['activate', this.position]);
 		// defeat the target unit
 		const target = activation[1];
+		const targetUnit = gameBoard.getHexagon(target).getUnit();
+		const updateSequence = targetUnit.updateInfluence(gameBoard);
+		stepSequence = stepSequence.concat(updateSequence);
 		stepSequence.push(['defeat', target]);
 
 		return stepSequence;

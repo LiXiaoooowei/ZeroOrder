@@ -10,14 +10,15 @@ const NUM_COLS = 5;
 // place holder for intermeidate steps such as switch
 const tempTileID = [100,100]
 
-
+// TO-DO?: bind unit.updateInfluence() with unit.setPosition and unit.defeat?
+// 			as of now updateInfluence is triggered by gameBoard.performMovement(), and various unit.activate()
 class GameBoard {
 	constructor() {
 		this.hexagonList = new Map();
 		for(let i = 0; i < NUM_COLS; i++){
 			for(let j = BOARD_SHAPE[i][0]; j <= BOARD_SHAPE[i][1]; j++){
 				const ID = [i,j];
-				this.hexagonList.set(IDTokey(ID), new Hexagon(ID));
+				this.hexagonList.set(IDToKey(ID), new Hexagon(ID));
 			}
 		}
 		// list of units to be built
@@ -26,7 +27,7 @@ class GameBoard {
 		this.tempTileID = tempTileID;
 		this.tempTile = new Hexagon(tempTileID);
 		this.tempTile.setAsTile();
-		this.hexagonList.set(IDTokey(tempTileID), this.tempTile);
+		this.hexagonList.set(IDToKey(tempTileID), this.tempTile);
 		// keeps record for movements, activations and builds
 		this.stepLog = [];
 	}
@@ -36,20 +37,20 @@ class GameBoard {
 	}
 
 	getHexagon(ID) {
-		return this.hexagonList.get(IDTokey(ID));
+		return this.hexagonList.get(IDToKey(ID));
 	}
 
 	getHexagonNeighbourID(ID) {
-		const IDList = this.hexagonList.get(IDTokey(ID)).getNeighbourHexagonID();
+		const IDList = this.hexagonList.get(IDToKey(ID)).getNeighbourHexagonID();
 		return IDList;
 	}
 
 	getHexagonNeighbours(ID) {
 		// var IDList = getHexagonNeighbourID(ID);		
-		const IDList = this.hexagonList.get(IDTokey(ID)).getNeighbourHexagonID();
+		const IDList = this.hexagonList.get(IDToKey(ID)).getNeighbourHexagonID();
 		const neighbours = [];
 		for (let i = 0; i < IDList.length; i++) {
-			neighbours.push(this.hexagonList.get(IDTokey(IDList[i])));
+			neighbours.push(this.hexagonList.get(IDToKey(IDList[i])));
 		}
 		return neighbours;
 	}
@@ -68,7 +69,7 @@ class GameBoard {
 	//////////////////////////////////// IRREDUCIBLE STEP ////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////
 	/* Any actual change to gameboard must be executed by one of these functions.
-	 * These steps are easily reversible, hence it makes backtracking easy.
+	 * These steps are easily reversible, hence it makes backtracking possible.
 	 * They should be treated as private functions.
 	 */
 	performStepSequence(stepSequence) {
@@ -89,6 +90,9 @@ class GameBoard {
 				case 'activate':
 					this.activate(stepContent);
 					break;
+				case 'mobility':
+					this.mobility(step);
+					break;
 				default:
 					console.log('UNKNOWN stepType IN stepSequence');
 					console.log(step);
@@ -99,8 +103,8 @@ class GameBoard {
 	move(movement) {
 		const firstID = movement[0];
 		const secondID = movement[1];
-		const firstHexagon =  this.hexagonList.get(IDTokey(firstID));
-		const secondHexagon =  this.hexagonList.get(IDTokey(secondID));
+		const firstHexagon =  this.hexagonList.get(IDToKey(firstID));
+		const secondHexagon =  this.hexagonList.get(IDToKey(secondID));
 		const unit = firstHexagon.getUnit();
 		firstHexagon.setUnit(null);
 		secondHexagon.setUnit(unit);
@@ -108,17 +112,14 @@ class GameBoard {
 	}
 	// target = ID of target tile
 	build(target) {	 	
-		const hexagon = this.hexagonList.get(IDTokey(target));
+		const hexagon = this.hexagonList.get(IDToKey(target));
 		hexagon.setAsTile();
 		hexagon.setTileUnit(this.pieceToPlace.pop());
 	}
 
-	// freeze() {
-
-	// }
 	// target = ID of tile with defeated unit
 	defeat(target) {
-	 	const hexagon = this.hexagonList.get(IDTokey(target));
+	 	const hexagon = this.hexagonList.get(IDToKey(target));
 	 	const targetUnit = hexagon.getUnit();
 	 	targetUnit.defeat();
 	 	hexagon.setUnit(null);
@@ -126,9 +127,30 @@ class GameBoard {
 	}
 	// target = ID of the tile with the unit to activate
 	activate(target) {
-	 	const hexagon = this.hexagonList.get(IDTokey(target));
+	 	const hexagon = this.hexagonList.get(IDToKey(target));
 	 	const targetUnit = hexagon.getUnit();
 	 	targetUnit.performAction();
+	}
+	// step[1] = targetID, step[2] = objective status
+	mobility(step)  {
+		const targetID = step[1];
+		const objectiveStatus = step[2];
+		const hexagon = this.hexagonList.get(IDToKey(targetID));
+	 	const targetUnit = hexagon.getUnit();
+		targetUnit.setImmobileStatus(objectiveStatus);
+		// tentatively in switch{}, will merge to unit.setImmobileStatus() 
+		// if there is no special requirement for other units
+		// switch(objectiveStatus){
+		// 	case null:
+		// 		targetUnit.freeToActivate = true;
+		// 		break;
+		// 	case 'freeze':
+		// 		targetUnit.freeToActivate = false;
+		// 		break;
+		// 	default:
+		// 		console.log('invalid change in mobility statue: unknown status!!!');
+		// 		console.log(step);
+		// }
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////////////////
@@ -138,7 +160,6 @@ class GameBoard {
 	//[[unitPosition, [target positions]],...]
 	getAllValidMoves(playerID) {
 		let movementList = [];		
-		// loop through all hexagons
 		for (let pair of this.hexagonList) {
 			const key = pair[0];
 			const hexagon = pair[1];
@@ -185,8 +206,18 @@ class GameBoard {
 		return true;
 	}
 	performMovement(movement) {
+		const startingPos = movement[0];
+		const hexagon = this.getHexagon(startingPos);
+		const unit = hexagon.getUnit();
+		const updateList = unit.updateInfluence(this);
 		this.move(movement);
-		this.stepLog.push(['movement', movement]);
+		const currentStep = [['move', movement]];			
+		for (let i = 0; i < updateList.length; i++){
+			const update = updateList[i];
+			this.mobility(update);
+			currentStep.push(update);
+		}
+		this.stepLog.push(['movement', currentStep]);	
 	}
 	hasFreeTileToGo(tileID, playerID) {
 		const neighbours = getHexagonNeighbourID(tileID);
@@ -217,7 +248,6 @@ class GameBoard {
 	//[['unit_name', unitPosition, [target list]],...]
 	getAllValidActivations(playerID) {
 		let activationList = [];
-		// loop through all hexagons
 		for (let pair of this.hexagonList) {
 			const key = pair[0];
 			const hexagon = pair[1];
@@ -226,7 +256,7 @@ class GameBoard {
 				continue;
 			}
 			// check if the unit is free to activate
-			if (unit.playerID != playerID || !unit.isFreeToActivate()){
+			if ((unit.playerID != playerID) || (!unit.isFreeToActivate())){
 				continue;
 			}
 			// get valid activations of the piece
@@ -234,8 +264,10 @@ class GameBoard {
 			// console.log(targets)
 			if (targets.length > 0) {
 				activationList.push([unit.getName(), keyToID(key), targets]);
+				// console.log(unit);
 			}
 		}
+		// console.log(activationList);
 		return activationList;
 	}
 	// validate an action
@@ -247,12 +279,13 @@ class GameBoard {
 		}
 		// console.log(activation)			
 		const unitPosition = activation[0];
-		const initialHexagon = this.hexagonList.get(IDTokey(unitPosition));
+		const initialHexagon = this.hexagonList.get(IDToKey(unitPosition));
 		const unit = initialHexagon.getUnit();
 		// the unit must be free to activate and has not yet activated
 		if (!unit.freeToActivate || unit.hasActivated) {
 			console.log('invalid activation: the unit cannot be activated!!');
 			console.log(activation);
+			console.log(unit)
 			return false;
 		}
 		// the unit must be correct type
@@ -275,7 +308,7 @@ class GameBoard {
 		}
 		// get stepSequence from the unit
 		const unitPosition = activation[0];
-		const initialHexagon = this.hexagonList.get(IDTokey(unitPosition));
+		const initialHexagon = this.hexagonList.get(IDToKey(unitPosition));
 		const unit = initialHexagon.getUnit();
 		const stepSequence = unit.activate(this, activation);
 		// perform the steps and log
@@ -311,6 +344,11 @@ class GameBoard {
 			}
 		}
 		return friendlyList;
+	}
+	getDistance(first, second) {
+		const first_c = axialToCube(first);
+		const second_c = axialToCube(second);
+		return getDistanceCubic(first_c, second_c);
 	}
 	//----------------------------- end of general ----------------------------------
 	//----------------------------PUSH and TOSS------------------------------
@@ -381,12 +419,12 @@ class GameBoard {
 		return emptySpaces;
 	}
 	isValidBuilding(target) {
-		const hexagon = this.hexagonList.get(IDTokey(target));
+		const hexagon = this.hexagonList.get(IDToKey(target));
 		return !hexagon.isTile;
 	}
 	buildTile(target) {
 		this.build(target);
-		this.stepLog.push(['building', target])
+		this.stepLog.push(['building',[['build',target]]])
 	}
 }
 
@@ -498,7 +536,7 @@ function isInBoard(ID) {
 }
 
 // [i,j] ==> 'i-j'
-function IDTokey(ID) {
+function IDToKey(ID) {
 	// console.log(ID);
 	const i = ID[0];
 	const j = ID[1];
@@ -512,6 +550,57 @@ function keyToID(key) {
 	const i = parseInt(tokens[0]);
 	const j = parseInt(tokens[1]);
 	return [i, j];
+}
+
+
+// convert coordinate in axial grid to cubic grid
+function axialToCube(position){
+	return [position[0],position[1],-(position[0]+position[1])];
+}
+
+// computes distance between two points in cubic grid
+function getDistanceCubic(a, b){
+    return (abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a.z[2] - b.z[2])) / 2;
+}
+
+
+// computes the list of 60 degree roataion of tile around center (ending with tile)
+// direction == 1 for clockwise
+// direction == 2 for anticlockwise
+function get60DegreeRotationList(center, tile, direction) {
+	let list = [];
+	for (let i = 0; i < 6; i++){
+		tile = get60DegreeRotation(center, tile, direction);
+		list.push(tile);
+	}
+	return list;
+}
+
+// computes the list of 60 degree roataion of tile around center
+// direction == 1 for clockwise
+// direction == 2 for anticlockwise
+function get60DegreeRotation(center, tile, direction) {
+	const center_cubic = axialToCube(center);
+	const tile_cubic = axialToCube(tile);
+	let vector = [0,0,0];
+	let temp = 0;
+	for (let i = 0; i < 3; i++){
+		vector[i] = tile_cubic[i]-tile_cubic[i];
+	}
+	if (direction === 1){
+		temp = vector[0];
+		vector[0] = -vector[1];
+		vector[1] = -vector[2];
+		vector[2] = -vector[0];
+	}
+	else {
+		temp = vector[0];
+		vector[0] = -vector[2];
+		vector[2] = -vector[1];
+		vector[1] = -vector[0];
+	}
+	const final = [center_cubic[0]+vector[0],center_cubic[1]+vector[1]];
+	return final;
 }
 
 

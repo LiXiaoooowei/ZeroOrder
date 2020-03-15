@@ -3,7 +3,7 @@
 /* 	boardState is an dictionary with the following properties:
 *	boardState.numCol: number of columns of game board
 *	boardState.boardShape: a 2D array specifying valid locations on each column
-* 	boardState.boardMatrix: a matrix representation of game board. Each loaction is represented as [UNIT, ABLE_TO_MOVE]
+* 	boardState.boardMatrix: a matrix representation of game board. Each loaction is represented as [UNIT, MOBILITY]
 *	boardState.whitePlayer: name of white player
 *	boardState.currentPlayer: name of current player
 * 	boardState.state: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
@@ -21,15 +21,17 @@ BLACK_DELETE = 1,
 BLACK_PUSH = 2,
 BLACK_SWITCH = 3,
 BLACK_TOSS = 4,
+BLACK_FREEZE = 5,
 WHITE_DELETE = 19,
 WHITE_PUSH = 20,
 WHITE_SWITCH = 21,
 WHITE_TOSS = 22,
+WHITE_FREEZE  = 23,
 EMPTY_SPACE = 37,
 EMPTY_TILE = 38;
 
 const UNIT = 0,
-ABLE_TO_MOVE = 1;
+MOBILITY = 1;
 
 
 const PENDING_MOVE = 0,
@@ -51,7 +53,7 @@ class BoardState {
 			for (let j = 0; j <= boardShape[i][1]; j++) {
 				this.boardState.boardMatrix[i].push(null);
 				if (j >= boardShape[i][0]) {
-					this.boardState.boardMatrix[i][j] = [EMPTY_TILE,false]
+					this.boardState.boardMatrix[i][j] = [EMPTY_TILE,null]
 				}
 			}
 		}
@@ -93,11 +95,11 @@ class BoardState {
 		let array = [];
 		// the space is not a tile
 		if (!hexagon.checkIsTile()){
-			return [EMPTY_SPACE, false];
+			return [EMPTY_SPACE, null];
 		}
 		// the space has no unit
 		if (hexagon.checkIsEmptyTile()){
-			return [EMPTY_TILE, false];
+			return [EMPTY_TILE, null];
 		}
 		// the tile is occupied by a unit
 		let colour, offset;
@@ -123,7 +125,10 @@ class BoardState {
 		else if(name === 'toss') {
 			num = 4+offset;
 		}
-		return [num, true]
+		else if(name === 'freeze') {
+			num = 5+offset;
+		}
+		return [num, hexagon.getUnit().immobileStatus]
 	}
 }
 

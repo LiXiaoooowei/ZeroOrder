@@ -10,16 +10,14 @@ class Unit {
 		this.position = null;
 		this.defeated = false;
 		this.isMobile = true;
+		this.immobileStatus = null;
 	}
 
 	// setBoardPosition(position) {
 	// 	this.position = position;
 	// }
 
-	getBoardPosition() {
-		return this.position;
-	}
-	
+	//////////////////////////// basic info ///////////////////////////////////
 	getName() {
 		return this.name;
 	}
@@ -34,40 +32,60 @@ class Unit {
 
 	setPosition(position) {
 		this.position = position;
-	}
-
-	getMobileStatus() {
-		return this.isMobile;
-	}
-	isFreeToActivate() {
-		return (this.isFreeToActivate && !this.hasActivated && !this.defeated);
-	}
+	}	
+	
+	/////////////////////////// defeat /////////////////////////////////////////
 	// mark a unit as defeated
-	defeat() {
+	defeat(gameBoard) {
 		this.defeated = true;
 		// this.isMobile = false;
 		// this.freeToActivate = false;
 		// this.position = null;
 	}
+	
 	revive() {
 		this.defeated = false;
+	}
+	////////////////////////// activate ///////////////////////////////////////
+	isFreeToActivate() {
+		return (this.freeToActivate && (!this.hasActivated) && (!this.defeated));
 	}
 	performAction() {
 		this.hasActivated = true;
 	}
-	// reset at the end of turn
-	
+	// reset at the end of turn	
 	resetActivation() {
 		this.hasActivated = false;
 	}
-	isFreeToMove() {
-		return this.isMobile;
-	}
+	
 	can_activate(gameBoard) {
 		if (!this.freeToActivate || this.defeated) {
 			return false;
 		}
 		return true
+	}
+	////////////////////////// movement ///////////////////////////////////
+	isFreeToMove() {
+		return this.isMobile;
+	}	
+	getImmobileStatus() {
+		return this.immobileStatus;
+	}
+	setImmobileStatus(status) {
+		if (status === null){
+			this.isMobile = true;
+			this.freeToActivate = true;
+		}
+		else {
+			this.isMobile = false;
+			this.freeToActivate = false
+		}
+		this.immobileStatus = status;
+	}
+	////////////////////////////////////////////////////////////////////////
+	// do nothing by default, overwritten in some pieces(e.g. freeze)
+	updateInfluence(gameBoard) {
+		return [];
 	}
 }
 

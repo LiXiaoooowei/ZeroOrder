@@ -46,7 +46,10 @@ class Switch extends unit.Unit {
 		// exchange position between 'switch' and target	
 		const firstPosition = this.position;
 		const secondPosition = activation[1];
+		const targetUnit = gameBoard.getHexagon(secondPosition).getUnit();
+		const updateSequence = targetUnit.updateInfluence(gameBoard);
 		const tempTileID = gameBoard.tempTileID;
+		stepSequence = stepSequence.concat(updateSequence);
 		stepSequence.push(['move',[firstPosition, tempTileID]]);
 		stepSequence.push(['move',[secondPosition, firstPosition]]);
 		stepSequence.push(['move',[tempTileID, secondPosition]]);
