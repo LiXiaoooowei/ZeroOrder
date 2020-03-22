@@ -98,8 +98,6 @@ class GameBoardAI extends Gameboard.GameBoard {
 				hexagon.setUnit(newUnit);
 			}
 		}
-		// set units status
-
 	}
 
 	// restructured the array returned to make DFS easier
@@ -123,13 +121,30 @@ class GameBoardAI extends Gameboard.GameBoard {
 		for (let i = 0; i < activations.length; i++) {
 			const unitName = activations[i][0];
 			const unitPosition = activations[i][1];
-			const unitActivationDimension = this.getUnitActivationDimension(unitName);
+			
 			// TO-DO: make this into recursion
-
-			for (let j = 0; j < activations[i][2].length; j++) {
-				const target = activations[i][2][j];
-				choices.push([unitPosition, target, unitName]);
+			const unitActivationDimension = this.getUnitActivationDimension(unitName);
+			if (unitActivationDimension === 1) {
+				for (let j = 0; j < activations[i][2].length; j++) {
+					const target = activations[i][2][j];
+					choices.push([unitPosition, target, unitName]);
+				}
 			}
+			else if (unitActivationDimension === 2) {
+				for (let j = 0; j < activations[i][2].length; j++) {
+					const activation = activations[i][2][j];
+					const first = activation[0];
+					for (let k = 0; k < activation[1].length; k++) {
+						const target = activation[1][k];
+						choices.push([unitPosition, first, target, unitName]);
+					}
+				}
+			}
+			else {
+				console.log('WRONG UNIT dimension');
+				console.log(activations[i]);
+			}
+			
 		}
 		return choices;
 	}

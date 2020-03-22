@@ -16,17 +16,21 @@
 *					list of non-tile spaces.
 */
 
+// TO-DO: organise constants to a file
+
 const ZERO_ORDER = 0,
 BLACK_DELETE = 1,
 BLACK_PUSH = 2,
 BLACK_SWITCH = 3,
 BLACK_TOSS = 4,
 BLACK_FREEZE = 5,
+BLACK_TWIST = 6,
 WHITE_DELETE = 19,
 WHITE_PUSH = 20,
 WHITE_SWITCH = 21,
 WHITE_TOSS = 22,
 WHITE_FREEZE  = 23,
+WHITE_TWIST = 24,
 EMPTY_SPACE = 37,
 EMPTY_TILE = 38;
 
@@ -127,6 +131,9 @@ class BoardState {
 		}
 		else if(name === 'freeze') {
 			num = 5+offset;
+		}
+		else if(name === 'twist') {
+			num = 6+offset;
 		}
 		return [num, hexagon.getUnit().immobileStatus]
 	}

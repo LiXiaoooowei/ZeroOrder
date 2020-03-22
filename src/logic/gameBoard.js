@@ -289,7 +289,7 @@ class GameBoard {
 			return false;
 		}
 		// the unit must be correct type
-		if (unit.getName() != activation[2]) {
+		if (unit.getName() != activation[activation.length-1]) {
 			console.log('invalid activation: wrong activation syntax!!');
 			console.log(activation);
 			console.log(unit);
@@ -350,6 +350,9 @@ class GameBoard {
 		const second_c = axialToCube(second);
 		return getDistanceCubic(first_c, second_c);
 	}
+	isInBoard(ID){
+		return isInBoard(ID);
+	}
 	//----------------------------- end of general ----------------------------------
 	//----------------------------PUSH and TOSS------------------------------
 	getNextHexInDirection(origin, next) {
@@ -394,9 +397,27 @@ class GameBoard {
 		return this.getAllHexInDirection(next, origin);
 	}
 	//----------------------------end of PUSH and TOSS------------------------------
-		
-	
-
+	//---------------------------- TWIST------------------------------
+	getAllHexInClockwise(origin,startingPos, rotationDirection) {
+		let hexagonList = [];
+		let outOfBoard = false;
+		const direction = (rotationDirection==='clockwise') ? 1:2; 
+		const tileList = get60DegreeRotationList(origin, startingPos, direction);
+		// while (!outOfBoard) {
+		// 	const nextPos = tileList.shift();
+		// 	if (isInBoard(nextPos)){
+		// 		hexagonList.push(nextPos);
+		// 	}
+		// 	else {
+		// 		outOfBoard = true;
+		// 	}
+		// 	if (tileList.length===0){
+		// 		outOfBoard = true;
+		// 	}
+		// }
+		return tileList;
+	}
+	//----------------------------end of TWIST------------------------------
 	//////////////////////////////////////////////////////////////////////////////////////////
 	/////////////////////////////////////// BUILDING /////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////
@@ -523,6 +544,7 @@ function getHexagonNeighbourID(ID){
 }
 
 // check if [i,j] is in game board, the temp tile is not on game board
+// move into Gameboard class??????????????????
 function isInBoard(ID) {
 	const i = ID[0];
 	const j = ID[1];
@@ -579,30 +601,88 @@ function get60DegreeRotationList(center, tile, direction) {
 // computes the list of 60 degree roataion of tile around center
 // direction == 1 for clockwise
 // direction == 2 for anticlockwise
+// function get60DegreeRotation(center, tile, direction) {
+// 	const center_cubic = axialToCube(center);
+// 	const tile_cubic = axialToCube(tile);
+// 	let vector = [0,0,0];
+// 	let temp = 0;
+// 	for (let i = 0; i < 3; i++){
+// 		vector[i] = tile_cubic[i]-center_cubic[i];
+// 	}
+// 	// console.log(vector)
+// 	if (direction === 1){
+// 		temp = vector[0];
+// 		vector[0] = -vector[1];
+// 		vector[1] = -vector[2];
+// 		vector[2] = -temp;
+// 	}
+// 	else {
+// 		temp = vector[0];
+// 		vector[0] = -vector[2];
+// 		vector[2] = -vector[1];
+// 		vector[1] = -temp;
+// 	}
+// 	const final = [center_cubic[0]+vector[0],center_cubic[1]+vector[1]];
+// 	// console.log(final)
+// 	return final;
+// }
+
 function get60DegreeRotation(center, tile, direction) {
-	const center_cubic = axialToCube(center);
-	const tile_cubic = axialToCube(tile);
-	let vector = [0,0,0];
+	let vector = [0,0];
 	let temp = 0;
-	for (let i = 0; i < 3; i++){
-		vector[i] = tile_cubic[i]-tile_cubic[i];
+	const col = center[0];
+	const row = center[1];
+	for (let i = 0; i < 2; i++){
+		vector[i] = tile[i]-center[i];
 	}
+	vector =  IDToKey(vector)
+	// console.log(vector)
 	if (direction === 1){
-		temp = vector[0];
-		vector[0] = -vector[1];
-		vector[1] = -vector[2];
-		vector[2] = -vector[0];
+
+		if (vector ==  IDToKey([0,-1])){
+			return [col+1,row];
+		}
+		else if (vector ===  IDToKey([1,0])) {
+			return [col+1,row+1];
+		}
+		else if (vector ===  IDToKey([1,1])) {
+			return [col, row+1];
+		}
+		else if (vector ===  IDToKey([0,1])) {
+			// console.log('bbbbbbbbb')
+			return [col-1, row];
+		}
+		else if (vector ===  IDToKey([-1, 0])) {
+			return [col-1, row-1];
+		}
+		else{
+			// console.log('aaaaaa')
+			return [col, row-1];
+		
+		}
 	}
 	else {
-		temp = vector[0];
-		vector[0] = -vector[2];
-		vector[2] = -vector[1];
-		vector[1] = -vector[0];
+		if (vector ===  IDToKey([0,-1])){
+			return [col-1,row-1];
+		}
+		else if (vector ===  IDToKey([1,0])){
+			return [col,row-1];
+		}
+		else if (vector ===  IDToKey([1,1])) {
+			return [col+1, row];
+		}
+		else if (vector ===  IDToKey([0,1])) {
+			return [col+1, row+1];
+		}
+		else if (vector ===  IDToKey([-1, 0])) {
+			return [col, row+1];
+		}
+		else{
+			return [col-1, row];
+		}
 	}
-	const final = [center_cubic[0]+vector[0],center_cubic[1]+vector[1]];
-	return final;
-}
 
+}
 
 // module.exports.Hexagon = Hexagon;
 module.exports.GameBoard = GameBoard;
