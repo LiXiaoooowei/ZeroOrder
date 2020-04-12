@@ -2,11 +2,14 @@
 
 const Gameboard = require('./gameBoard');
 const UnitList = require('./units/unitList');
+const Constants = require('./constants');
 
 /*	This class is used by AI player to simulate game board for planning purpose
 	The key difference is that this class allows the player to backtrack steps 
 	performed in the current turn.
 */
+
+const CONSTANT = Constants.Constants;
 
 class GameBoardAI extends Gameboard.GameBoard {
 
@@ -21,22 +24,7 @@ class GameBoardAI extends Gameboard.GameBoard {
 	//////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////// BOARDSTATE ////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////////////////
-	/* 	boardState is an dictionary with the following properties:
-	*	boardState.numCol: number of columns of game board
-	*	boardState.boardShape: a 2D array specifying valid locations on each column
-	* 	boardState.boardMatrix: a matrix representation of game board. Each loaction is represented as 
-	*	[UNIT, MOBILITY]
-	*	boardState.whitePlayer: name of white player
-	*	boardState.currentPlayer: name of current player
-	* 	boardState.state: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
-	*					or BLACK_WIN
-	*	boardState.content: if the game is pending movement, it contents a list of valid movements,
-	*					each movement is represented as [starting location, [list of valid ending locations]]
-	*					if the game is pending activation, it contents a list of valid activations, 
-	*					each activation is represented as [name of unit, location, [list of valid targets]]
-	* 					if the game is waiting for player to place a defeated piece, it contains the 
-	*					list of non-tile spaces.
-	*/
+
 	// initialise gameboard from boardstate
 	// ASSUMPTION: boardState is at PENDING_MOVE!!!
 	setupGameBoard(boardState, playerName) {
@@ -65,11 +53,11 @@ class GameBoardAI extends Gameboard.GameBoard {
 				const unitIdx = tileStatus[0];
 				const unitStatus = tileStatus[1];
 				// skip if there is no unit at this position
-				if (unitIdx === 37) {
+				if (unitIdx === CONSTANT.UNIT_CODE.EMPTY_SPACE) {
 					continue;
 				}
 				// set the position as empty tile
-				else if (unitIdx === 38) {
+				else if (unitIdx === CONSTANT.UNIT_CODE.EMPTY_TILE) {
 					const tilePosition = [i, j];
 					const hexagon = this.hexagonList.get(IDToKey(tilePosition));
 					hexagon.setAsTile();

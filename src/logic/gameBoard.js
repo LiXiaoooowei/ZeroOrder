@@ -1,22 +1,18 @@
 'use strict';
 
 const BoardState = require('./boardState');
-
+const Constants = require('./constants');
 // Game board and hexagons
 
-// constants for shape of board, see rule.pdf
-const BOARD_SHAPE = [[0, 6], [0, 7], [1, 7], [1, 8], [2,8]];
-const NUM_COLS = 5;
-// place holder for intermeidate steps such as switch
-const tempTileID = [100,100]
+const CONSTANT = Constants.Constants;
 
 // TO-DO?: bind unit.updateInfluence() with unit.setPosition and unit.defeat?
 // 			as of now updateInfluence is triggered by gameBoard.performMovement(), and various unit.activate()
 class GameBoard {
 	constructor() {
 		this.hexagonList = new Map();
-		for(let i = 0; i < NUM_COLS; i++){
-			for(let j = BOARD_SHAPE[i][0]; j <= BOARD_SHAPE[i][1]; j++){
+		for(let i = 0; i < CONSTANT.NUM_COLS; i++){
+			for(let j = CONSTANT.BOARD_SHAPE[i][0]; j <= CONSTANT.BOARD_SHAPE[i][1]; j++){
 				const ID = [i,j];
 				this.hexagonList.set(IDToKey(ID), new Hexagon(ID));
 			}
@@ -24,10 +20,10 @@ class GameBoard {
 		// list of units to be built
 		this.pieceToPlace = [];
 		// place holder for intermeidate steps such as switch
-		this.tempTileID = tempTileID;
-		this.tempTile = new Hexagon(tempTileID);
+		this.tempTileID = CONSTANT.tempTileID;
+		this.tempTile = new Hexagon(this.tempTileID);
 		this.tempTile.setAsTile();
-		this.hexagonList.set(IDToKey(tempTileID), this.tempTile);
+		this.hexagonList.set(IDToKey(this.tempTileID), this.tempTile);
 		// keeps record for movements, activations and builds
 		this.stepLog = [];
 	}
@@ -58,7 +54,7 @@ class GameBoard {
 
 	// create an boardstate object for front-end
 	generateBoardState(currentPlayer) {
-		const boardstate = new BoardState.BoardState(NUM_COLS, BOARD_SHAPE, this.whitePlayer, currentPlayer);
+		const boardstate = new BoardState.BoardState(CONSTANT.NUM_COLS, CONSTANT.BOARD_SHAPE, this.whitePlayer, currentPlayer);
 		for (let pair of this.hexagonList) {
 			boardstate.setHexagon(keyToID(pair[0]),pair[1]);
 		}
@@ -456,7 +452,7 @@ class Hexagon {
 		this.isTile = false;
 		this.unit = null;
 		this.isEmptyTile = false;
-		if (ID != tempTileID) {
+		if (ID != CONSTANT.tempTileID) {
 			this.neighbourID = getHexagonNeighbourID(ID);
 		}		
 		this.tileUnit = null;
@@ -516,27 +512,27 @@ function getHexagonNeighbourID(ID){
 	const row = ID[1];
 	const neighbours = [];
 	// check up-down
-	if (BOARD_SHAPE[col][0] < row){
+	if (CONSTANT.BOARD_SHAPE[col][0] < row){
 		neighbours.push([col, row-1]);
 	}
-	if (BOARD_SHAPE[col][1] > row){
+	if (CONSTANT.BOARD_SHAPE[col][1] > row){
 		neighbours.push([col, row+1]);
 	}
 	// check left
 	if (col > 0){
-		if (BOARD_SHAPE[col-1][0] < row){
+		if (CONSTANT.BOARD_SHAPE[col-1][0] < row){
 			neighbours.push([col-1, row-1]);
 		}
-		if (BOARD_SHAPE[col-1][1] >= row){
+		if (CONSTANT.BOARD_SHAPE[col-1][1] >= row){
 			neighbours.push([col-1, row]);
 		}
 	}
 	// check right
-	if (col < NUM_COLS-1) {
-		if (BOARD_SHAPE[col+1][0] <= row){
+	if (col < CONSTANT.NUM_COLS-1) {
+		if (CONSTANT.BOARD_SHAPE[col+1][0] <= row){
 			neighbours.push([col+1, row]);
 		}
-		if (BOARD_SHAPE[col+1][1] > row){
+		if (CONSTANT.BOARD_SHAPE[col+1][1] > row){
 			neighbours.push([col+1, row+1]);
 		}
 	}
@@ -548,10 +544,10 @@ function getHexagonNeighbourID(ID){
 function isInBoard(ID) {
 	const i = ID[0];
 	const j = ID[1];
-	if (i < 0 || i >= NUM_COLS){
+	if (i < 0 || i >= CONSTANT.NUM_COLS){
 		return false;
 	}
-	if (j < BOARD_SHAPE[i][0] || j > BOARD_SHAPE[i][1]){
+	if (j < CONSTANT.BOARD_SHAPE[i][0] || j > CONSTANT.BOARD_SHAPE[i][1]){
 		return false;
 	}
 	return true;

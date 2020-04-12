@@ -1,13 +1,15 @@
 'use strict';
 
+const Constants = require('./constants');
+const UnitList = require('./units/unitList');
 /* 	boardState is an dictionary with the following properties:
 *	boardState.numCol: number of columns of game board
 *	boardState.boardShape: a 2D array specifying valid locations on each column
 * 	boardState.boardMatrix: a matrix representation of game board. Each loaction is represented as [UNIT, MOBILITY]
 *	boardState.whitePlayer: name of white player
 *	boardState.currentPlayer: name of current player
-* 	boardState.state: current game status, it can be PENDING_MOVE, PENDING_ACTION, PENDING_NEW_TILE, WHITE_WIN
-*					or BLACK_WIN
+* 	boardState.state: current game status, it can be CONSTANT.GAME_STATUS.PENDING_MOVE, CONSTANT.GAME_STATUS.PENDING_ACTION, PENDING_NEW_TILE, CONSTANT.GAME_STATUS.WHITE_WIN
+*					or CONSTANT.GAME_STATUS.BLACK_WIN
 *	boardState.content: if the game is pending movement, it contents a list of valid movements,
 *					each movement is represented as [starting location, [list of valid ending locations]]
 *					if the game is pending activation, it contents a list of valid activations, 
@@ -16,33 +18,8 @@
 *					list of non-tile spaces.
 */
 
-// TO-DO: organise constants to a file
-
-const ZERO_ORDER = 0,
-BLACK_DELETE = 1,
-BLACK_PUSH = 2,
-BLACK_SWITCH = 3,
-BLACK_TOSS = 4,
-BLACK_FREEZE = 5,
-BLACK_TWIST = 6,
-WHITE_DELETE = 19,
-WHITE_PUSH = 20,
-WHITE_SWITCH = 21,
-WHITE_TOSS = 22,
-WHITE_FREEZE  = 23,
-WHITE_TWIST = 24,
-EMPTY_SPACE = 37,
-EMPTY_TILE = 38;
-
-const UNIT = 0,
-MOBILITY = 1;
-
-
-const PENDING_MOVE = 0,
-PENDING_ACTION = 1,
-WAITING_NEW_TILE = 2,
-WHITE_WIN = 3,
-BLACK_WIN = 4;
+const CONSTANT = Constants.Constants;
+const UNIT_ARRAY = UnitList.unitNameArray;
 
 class BoardState {
 	constructor(numCol, boardShape, whitePlayer, currentPlayer) {
@@ -57,7 +34,7 @@ class BoardState {
 			for (let j = 0; j <= boardShape[i][1]; j++) {
 				this.boardState.boardMatrix[i].push(null);
 				if (j >= boardShape[i][0]) {
-					this.boardState.boardMatrix[i][j] = [EMPTY_TILE,null]
+					this.boardState.boardMatrix[i][j] = [CONSTANT.UNIT_CODE.EMPTY_TILE,null]
 				}
 			}
 		}
@@ -77,19 +54,19 @@ class BoardState {
 	}
 	setStatus(state, content) {
 		if (state === 'waiting_movement') {
-			this.boardState.state = PENDING_MOVE;
+			this.boardState.state = CONSTANT.GAME_STATUS.PENDING_MOVE;
 		}
 		else if (state === 'waiting_activation') {
-			this.boardState.state = PENDING_ACTION;
+			this.boardState.state = CONSTANT.GAME_STATUS.PENDING_ACTION;
 		}
 		else if (state === 'waiting_tile') {
-			this.boardState.state = WAITING_NEW_TILE
+			this.boardState.state = CONSTANT.GAME_STATUS.WAITING_NEW_TILE
 		}
-		else if (state === 'white_win') {
-			this.boardState.state = WHITE_WIN;
+		else if (state === 'CONSTANT.GAME_STATUS.WHITE_WIN') {
+			this.boardState.state = CONSTANT.GAME_STATUS.WHITE_WIN;
 		}
 		else {
-			this.boardState.state = BLACK_WIN;
+			this.boardState.state = CONSTANT.GAME_STATUS.BLACK_WIN;
 		}
 		
 		this.boardState.content = content;
@@ -99,11 +76,11 @@ class BoardState {
 		let array = [];
 		// the space is not a tile
 		if (!hexagon.checkIsTile()){
-			return [EMPTY_SPACE, null];
+			return [CONSTANT.UNIT_CODE.EMPTY_SPACE, null];
 		}
 		// the space has no unit
 		if (hexagon.checkIsEmptyTile()){
-			return [EMPTY_TILE, null];
+			return [CONSTANT.UNIT_CODE.EMPTY_TILE, null];
 		}
 		// the tile is occupied by a unit
 		let colour, offset;
@@ -116,25 +93,10 @@ class BoardState {
 			offset = 0;
 		}
 		const name = hexagon.getUnit().getName();
-		let num = 0;
-		if (name === 'delete'){
-			num = 1+offset;
-		}
-		else if(name === 'push'){
-			num = 2+offset;
-		}
-		else if(name === 'switch'){
-			num = 3+offset;
-		}
-		else if(name === 'toss') {
-			num = 4+offset;
-		}
-		else if(name === 'freeze') {
-			num = 5+offset;
-		}
-		else if(name === 'twist') {
-			num = 6+offset;
-		}
+
+		const unit_index = UNIT_ARRAY.indexOf(name);
+		const num = unit_index + offset+1;
+
 		return [num, hexagon.getUnit().immobileStatus]
 	}
 }
