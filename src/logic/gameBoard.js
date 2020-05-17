@@ -542,6 +542,7 @@ function getHexagonNeighbourID(ID){
 // check if [i,j] is in game board, the temp tile is not on game board
 // move into Gameboard class??????????????????
 function isInBoard(ID) {
+	// console.log(ID)
 	const i = ID[0];
 	const j = ID[1];
 	if (i < 0 || i >= CONSTANT.NUM_COLS){

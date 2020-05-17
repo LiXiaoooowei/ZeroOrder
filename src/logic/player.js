@@ -1,7 +1,17 @@
 'use strict';
 
+/* interesting observation about AI_Random and AI_DFS:
+ * when AI_DFS has random evaluation function, it performs better than
+ * AI_Random although both are making random moves. This is because 
+ * AI_DFS has higher chance of making more complicated moves and those
+ * moves are generally better.
+ */
+
 const RoundSequence = require('./roundSequence');
-const GameBoardAI = require('./gameBoardAI');
+const GameBoardAI = require('./AI/gameBoardAI');
+const StateEvaluator = require('./AI/stateEvaluation');
+
+const convertActivations  = GameBoardAI.convertActivations;
 
 class Player {
 	constructor(name) {
@@ -51,6 +61,7 @@ class Player {
 			this.unitList[i].resetActivation();
 		}
 	}
+
 	getUnitWithName(name) {
 		for (let i = 0; i < this.unitList.length; i++) {
 			if (name === this.unitList[i].getName()){
@@ -61,24 +72,15 @@ class Player {
 	}
 }
 
-/* 
- * Two decision making methods:
- * 1. Random decision making:
- 	  makeMoveRandom()
- 	  activateAll()
- 	  placeTileRandom()
- * 2. DFS based decision making:
-	  makeMovePlan()
-	  activatePlan()
-	  buildPlan()
- */
-class AI extends Player {
-	constructor(name) {
+
+class AI_DFS extends Player {
+	constructor(name, key) {
 		super(name)
+		this.evaluator = new StateEvaluator.StateEvaluation(key);
 	}
 
 	// make a movement and plan for the rest of this round
-	makeMovePlan(validMovements, gameState) {
+	move(validMovements, gameState) {
 		this.planRound(gameState);
 		// console.log(this.roundSequence)
 		return this.roundSequence.getMovement();
@@ -106,7 +108,8 @@ class AI extends Player {
 		// termination
 		if (roundStatus === 'end_of_turn') {
 			// evaluate score for current gameboard, update if score is higher
-			const newScore = Math.random();
+			const newScore = this.evaluator.evaluate(gameBoard)
+			// const newScore = Math.random();
 			// console.log('new score: ' + newScore + ' best score: ' + currentScore);
 			// console.log(this.roundSequence);
 			if (newScore > currentScore) {
@@ -176,16 +179,24 @@ class AI extends Player {
 		return currentScore;
 	}
 
-	activatePlan(validActivations) {
+	activate(validActivations) {
 		return this.roundSequence.getNextActivation();
 	}
 
-	buildPlan(emptySpaces) {
+	build(emptySpaces) {
 		return this.roundSequence.getNextBuilding();
+	}
+}
+
+
+// make random movements but always activate if possible
+class AI_Random extends Player {
+	constructor(name) {
+		super(name)
 	}
 
 	// make a random move from list of valid momements
-	makeMoveRandom(validMovements) {
+	move(validMovements, gameState) {
 
 		const rand1 = Math.floor(Math.random()*validMovements.length);
 		const unitPosition = validMovements[rand1][0];
@@ -195,31 +206,55 @@ class AI extends Player {
 	}
 
 	// activate all possible piece in random sequence with random targets
-	activateAll(validActivations) {
+	activate(validActivations) {
+		// console.log(validActivations)
 		// return null when there is no valid activation
 		if (validActivations.length == 0){
 			return null;
 		}
-				
-		const rand1 = Math.floor(Math.random()*validActivations.length);
-		// var unit = this.getUnitWithName(validActivations[rand1][0]);
-		const unit = validActivations[rand1][1];
-		const rand2 = Math.floor(Math.random()*validActivations[rand1][2].length);
-		const target = validActivations[rand1][2][rand2];
-		return [unit, target, validActivations[rand1][0]];
+		const activations = convertActivations(validActivations);
+		const rand1 = Math.floor(Math.random()*activations.length);
+		return activations[rand1];
 	}
 
 	// randomly choose an empty space to place the new tile
-	placeTileRandom(emptySpaces) {
+	build(emptySpaces) {
 		const rand = Math.floor(Math.random()*emptySpaces.length);
 		return emptySpaces[rand];
 	}
 }
 
 
+
 class Human extends Player {
 	constructor(name) {
 		super(name)
+	}
+
+	move(validMovements, gameState) {
+
+		const rand1 = Math.floor(Math.random()*validMovements.length);
+		const unitPosition = validMovements[rand1][0];
+		const rand2 = Math.floor(Math.random()*validMovements[rand1][1].length);
+		const newPosition = validMovements[rand1][1][rand2];
+		return [unitPosition, newPosition];
+	}
+
+	// activate all possible piece in random sequence with random targets
+	activate(validActivations) {
+		// return null when there is no valid activation
+		if (validActivations.length == 0){
+			return null;
+		}
+		const activations = convertActivations(validActivations);
+		const rand1 = Math.floor(Math.random()*activations.length);
+		return activations[rand1];
+	}
+
+	// randomly choose an empty space to place the new tile
+	build(emptySpaces) {
+		const rand = Math.floor(Math.random()*emptySpaces.length);
+		return emptySpaces[rand];
 	}
 }
 
@@ -235,5 +270,6 @@ function clone(obj) {
 }
 
 
-module.exports.AI = AI;
+module.exports.AI_Random = AI_Random;
+module.exports.AI_DFS = AI_DFS;
 module.exports.Human = Human;

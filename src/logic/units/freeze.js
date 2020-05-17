@@ -33,6 +33,8 @@ class Freeze extends unit.Unit {
 		if (targetList.length !== neighbouringEnemies.length){
 			console.log('invalid activation: targetUnit.length != neighbouringEnemies.length!!');
 			console.log(activation);
+			console.log(targetList);
+			console.log(neighbouringEnemies);
 			return false;
 		}
 		for (let i = 0; i < targetList.length; i++){

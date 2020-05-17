@@ -5,10 +5,11 @@ const UnitList = require('./units/unitList');
 const player = require('./player');
 
 /***************************test variables***********************************/
-const playerList = [new player.AI('Alice'), new player.AI('Bob')];
+const playerList = [new player.AI_DFS('Alice', 'random'), new player.AI_DFS('Bob', 'best')];
 
-const tilePosition = [[1,3],[1,4],[1,6],[1,7],[2,3],[2,4],[2,5],[2,6],[2,7],[3,3],[3,5],[3,6],[4,5]];
-const initialPieces = [[['delete', [2,3]], ['toss', [2,4]], ['push',[1,3]],['twist',[3,3]]], [['delete', [2,7]],['switch',[3,6]],['push',[3,5]],['freeze',[1,6]]]];
+// full game
+const tilePosition = [[0,1],[0,2],[0,3],[0,4],[0,5],[1,2],[1,3],[1,4],[1,5],[1,6],[2,2],[2,3],[2,4],[2,5],[2,6],[3,2],[3,3],[3,4],[3,5],[3,6],[4,3],[4,4],[4,5],[4,6],[4,7]];
+const initialPieces = [[['delete', [3,3]], ['toss', [0,1]], ['switch',[1,2]],['push',[4,4]],['twist',[4,3]],['freeze',[2,2]]], [['delete', [1,5]], ['toss', [4,7]], ['switch',[3,6]],['push',[0,4]],['twist',[0,5]],['freeze',[2,6]]]];
 // test freeze
 // const tilePosition = [[1,2],[1,3],[1,4],[1,5],[1,6],[1,7]];
 // const initialPieces = [[['freeze', [1,2]]], [['delete', [1,4]],['push',[1,5]]]];
@@ -128,7 +129,7 @@ class Game {
 		let isValidMove = false;
 		let move = null;
 		while(!isValidMove){
-			move = this.currentPlayer.makeMovePlan(validMovements, boardState);
+			move = this.currentPlayer.move(validMovements, boardState);
 			isValidMove = this.gameBoard.isValidMove(move, this.currentPlayer.getName());
 		}
 		this.gameBoard.performMovement(move);
@@ -144,7 +145,7 @@ class Game {
 		//-------------------------------------------------------------------------------
 		let pendingActivation = true;
 		while(pendingActivation) {
-			const activation = this.currentPlayer.activatePlan(validActivations);
+			const activation = this.currentPlayer.activate(validActivations);
 			if (activation === null) {
 				pendingActivation = false;
 			}				
@@ -173,7 +174,7 @@ class Game {
 			const boardState = this.getBoardState(emptySpaces);
 			// console.log(boardState);
 			//-------------------------------------------------------------------------------
-			const target = this.currentPlayer.buildPlan(emptySpaces);
+			const target = this.currentPlayer.build(emptySpaces);
 			if (this.gameBoard.isValidBuilding(target)) {
 				this.gameBoard.buildTile(target);
 				console.log('new tile at ' + target);

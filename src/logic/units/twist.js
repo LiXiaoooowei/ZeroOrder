@@ -87,9 +87,15 @@ class Twist extends unit.Unit {
 	}
 
 	isValidActivation(gameBoard, activation){ 
+		// console.log(activation)
 		const target = activation[1];
 		const finalPosition = activation[2][0];
 		const direction = activation[2][1];
+		if (!gameBoard.isInBoard(target)) {
+			console.log('invalid activation: target is off board');
+			console.log(target);
+			return false;
+		}
 		const targetUnit = gameBoard.getHexagon(target).getUnit();
 		// target must not be already defeated
 		if (targetUnit.defeated) {

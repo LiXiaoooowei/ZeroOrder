@@ -1,8 +1,8 @@
 'use strict';
 
-const Gameboard = require('./gameBoard');
-const UnitList = require('./units/unitList');
-const Constants = require('./constants');
+const Gameboard = require('./../gameBoard');
+const UnitList = require('./../units/unitList');
+const Constants = require('./../constants');
 
 /*	This class is used by AI player to simulate game board for planning purpose
 	The key difference is that this class allows the player to backtrack steps 
@@ -30,6 +30,7 @@ class GameBoardAI extends Gameboard.GameBoard {
 	setupGameBoard(boardState, playerName) {
 		// set white player
 		this.setWhitePlayer(boardState.whitePlayer);
+		this.owner = playerName;
 		// determine current player colour
 		let currentPlayer = boardState.currentPlayer;
 		// const currentPlayerColour = ;
@@ -104,48 +105,10 @@ class GameBoardAI extends Gameboard.GameBoard {
 	}
 
 	getAllValidActivations(player_id) {
-		const activations = super.getAllValidActivations(player_id);
-		let choices = [null];	// null -> skip activation
-		for (let i = 0; i < activations.length; i++) {
-			const unitName = activations[i][0];
-			const unitPosition = activations[i][1];
-			
-			// TO-DO: make this into recursion
-			const unitActivationDimension = this.getUnitActivationDimension(unitName);
-			if (unitActivationDimension === 1) {
-				for (let j = 0; j < activations[i][2].length; j++) {
-					const target = activations[i][2][j];
-					choices.push([unitPosition, target, unitName]);
-				}
-			}
-			else if (unitActivationDimension === 2) {
-				for (let j = 0; j < activations[i][2].length; j++) {
-					const activation = activations[i][2][j];
-					const first = activation[0];
-					for (let k = 0; k < activation[1].length; k++) {
-						const target = activation[1][k];
-						choices.push([unitPosition, first, target, unitName]);
-					}
-				}
-			}
-			else {
-				console.log('WRONG UNIT dimension');
-				console.log(activations[i]);
-			}
-			
-		}
-		return choices;
+		const activations = super.getAllValidActivations(player_id);		
+		return convertActivations(activations);
 	}
-	getUnitActivationDimension(unitName) {
-		// TO-DO: make action dimension as an attribute for unit class
-		switch(unitName){
-			case 'twist':
-				return 2;
-			
-			default:
-				return 1;
-		}
-	}
+
 	getEmptySpaces() {
 		if (this.pieceToPlace.length === 0) {
 			return [null];
@@ -296,4 +259,51 @@ function key_to_ID(key) {
 }
 
 
+function getUnitActivationDimension(unitName) {
+	// TO-DO: make action dimension as an attribute for unit class
+	switch(unitName){
+		case 'twist':
+			return 2;
+		
+		default:
+			return 1;
+	}
+}
+
+
+function convertActivations(activations) {
+		let choices = [null];	// null -> skip activation
+		for (let i = 0; i < activations.length; i++) {
+			const unitName = activations[i][0];
+			const unitPosition = activations[i][1];
+			
+			// TO-DO: make this into recursion
+			const unitActivationDimension = getUnitActivationDimension(unitName);
+			if (unitActivationDimension === 1) {
+				for (let j = 0; j < activations[i][2].length; j++) {
+					const target = activations[i][2][j];
+					choices.push([unitPosition, target, unitName]);
+				}
+			}
+			else if (unitActivationDimension === 2) {
+				for (let j = 0; j < activations[i][2].length; j++) {
+					const activation = activations[i][2][j];
+					const first = activation[0];
+					for (let k = 0; k < activation[1].length; k++) {
+						const target = activation[1][k];
+						choices.push([unitPosition, first, target, unitName]);
+					}
+				}
+			}
+			else {
+				console.log('WRONG UNIT dimension');
+				console.log(activations[i]);
+			}
+			
+		}
+		return choices;
+	}
+
+
 module.exports.GameBoardAI = GameBoardAI;
+module.exports.convertActivations = convertActivations;
